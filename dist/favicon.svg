@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#070b1a"/>
+  <!-- triangle (green) -->
+  <path d="M18 11 L26 26 L10 26 Z" fill="none" stroke="#4ade80" stroke-width="3" stroke-linejoin="round"/>
+  <!-- circle (red) -->
+  <circle cx="46" cy="19" r="8" fill="none" stroke="#f87171" stroke-width="3"/>
+  <!-- cross / X (blue) -->
+  <g stroke="#60a5fa" stroke-width="3" stroke-linecap="round">
+    <line x1="11" y1="39" x2="25" y2="53"/>
+    <line x1="11" y1="53" x2="25" y2="39"/>
+  </g>
+  <!-- square (pink) -->
+  <rect x="38" y="40" width="15" height="15" rx="3" fill="none" stroke="#f472b6" stroke-width="3"/>
+</svg>

@@ -1,0 +1,30 @@
+{
+  "name": "quadshot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Quadshot — a fast-paced 2D arcade reflex game (Phaser 3 + TypeScript + Vite, Capacitor-ready).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/haptics": "^6.0.3",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/preferences": "^6.0.2",
+    "@capacitor/share": "^6.0.4",
+    "phaser": "^3.88.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
