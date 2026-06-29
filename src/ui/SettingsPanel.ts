@@ -4,6 +4,7 @@ import { Haptics } from "../systems/Haptics";
 import { Monetization } from "../systems/Monetization";
 import { Sfx } from "../systems/Sfx";
 import { Storage } from "../systems/Storage";
+import { createButton, createText } from "./widgets";
 
 /**
  * Modal settings overlay: sound + haptics toggles and a (confirm-guarded) reset.
@@ -23,7 +24,7 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
     .setStrokeStyle(2, 0x2b3a5c, 1);
   c.add([dim, panel]);
 
-  c.add(label(scene, cx, cy - 186, "SETTINGS", 26, UI.TEXT, 0.5));
+  c.add(createText(scene, cx, cy - 186, "SETTINGS", 26, UI.TEXT, 0.5));
 
   c.add(toggleRow(scene, cx, cy - 128, "SOUND", !Sfx.isMuted(), (on) => {
     Sfx.unlock();
@@ -39,9 +40,9 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
   // Monetization: remove-ads purchase + restore (hidden if ads are disabled).
   if (MONETIZATION.ENABLED) {
     if (Monetization.isRemoved()) {
-      c.add(label(scene, cx, cy - 16, "✓ ADS REMOVED — THANK YOU", 15, UI.ACCENT, 0.5));
+      c.add(createText(scene, cx, cy - 16, "✓ ADS REMOVED — THANK YOU", 15, UI.ACCENT, 0.5));
     } else {
-      const buy = label(
+      const buy = createText(
         scene,
         cx,
         cy - 22,
@@ -57,7 +58,7 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
         );
       });
       c.add(buy);
-      const restore = label(scene, cx, cy + 8, "Restore purchases", 12, UI.TEXT_DIM, 0.5).setInteractive({
+      const restore = createText(scene, cx, cy + 8, "Restore purchases", 12, UI.TEXT_DIM, 0.5).setInteractive({
         useHandCursor: true,
       });
       restore.on("pointerup", () => {
@@ -72,7 +73,7 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
   }
 
   // Reset progress — two-tap confirm.
-  const reset = label(scene, cx, cy + 70, "RESET PROGRESS", 16, UI.DANGER, 0.5).setInteractive({
+  const reset = createText(scene, cx, cy + 70, "RESET PROGRESS", 16, UI.DANGER, 0.5).setInteractive({
     useHandCursor: true,
   });
   let armed = false;
@@ -87,30 +88,19 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
   });
   c.add(reset);
 
-  c.add(pillButton(scene, cx, cy + 166, "CLOSE", () => {
-    c.destroy();
-    onClose();
-  }));
-}
-
-function label(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  str: string,
-  size: number,
-  color: string,
-  originX: number
-): Phaser.GameObjects.Text {
-  return scene.add
-    .text(x, y, str, {
-      fontFamily: UI.FONT,
-      fontSize: `${size}px`,
-      color,
-      fontStyle: "bold",
-    })
-    .setOrigin(originX, 0.5)
-    .setResolution(2);
+  c.add(
+    createButton(
+      scene,
+      cx,
+      cy + 166,
+      "CLOSE",
+      () => {
+        c.destroy();
+        onClose();
+      },
+      { w: 150, h: 46, fontSize: 18, filled: false }
+    ).container
+  );
 }
 
 function toggleRow(
@@ -122,9 +112,9 @@ function toggleRow(
   onChange: (on: boolean) => void
 ): Phaser.GameObjects.Container {
   const row = scene.add.container(0, 0);
-  const left = label(scene, cx - 128, y, name, 17, UI.TEXT, 0);
+  const left = createText(scene, cx - 128, y, name, 17, UI.TEXT, 0);
   let on = initial;
-  const value = label(scene, cx + 128, y, "", 17, UI.ACCENT, 1).setInteractive({
+  const value = createText(scene, cx + 128, y, "", 17, UI.ACCENT, 1).setInteractive({
     useHandCursor: true,
   });
   const render = () => {
@@ -139,28 +129,4 @@ function toggleRow(
   });
   row.add([left, value]);
   return row;
-}
-
-function pillButton(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  text: string,
-  onClick: () => void
-): Phaser.GameObjects.Container {
-  const w = 150;
-  const h = 46;
-  const c = scene.add.container(x, y);
-  const bg = scene.add
-    .rectangle(0, 0, w, h, 0x16233d, 1)
-    .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(UI.ACCENT).color, 1);
-  const t = label(scene, 0, 0, text, 18, UI.ACCENT, 0.5);
-  c.add([bg, t]);
-  c.setInteractive({
-    useHandCursor: true,
-    hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-  });
-  c.on("pointerup", onClick);
-  return c;
 }

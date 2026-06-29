@@ -25,6 +25,7 @@ export class Difficulty {
 
   /** Dev-only: pin the game to a phase (1-based). */
   devForcePhase(index: number): void {
+    if (index < 1 || index > PHASES.length) return; // ignore out-of-range
     this.forcedPhase = index;
     this.phase = PHASES[index - 1];
   }

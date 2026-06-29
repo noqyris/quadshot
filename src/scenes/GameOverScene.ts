@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { GAME, HIGH_SCORE_COUNT, SCENES, TEX, UI } from "../config/constants";
+import { GAME, HIGH_SCORE_COUNT, SCENES, UI } from "../config/constants";
 import { createBackground } from "../ui/Background";
 import { showBanner } from "../ui/Banner";
+import { createButton, createLinkButton, createText } from "../ui/widgets";
 import { Monetization } from "../systems/Monetization";
 import { RunResult, Storage } from "../systems/Storage";
 import { Share } from "../systems/Share";
@@ -89,19 +90,20 @@ export class GameOverScene extends Phaser.Scene {
 
     // Choices — continue (rewarded) is the encouraged CTA when eligible.
     const shareData = { score, best: Math.max(storedBest, score), phase, isNewBest };
+    const cx = GAME.WIDTH / 2;
     if (canContinue) {
-      this.makeButton(H * 0.61, "WATCH AD & CONTINUE", () => this.continueRun(), {
+      createButton(this, cx, H * 0.61, "WATCH AD & CONTINUE", () => this.continueRun(), {
         w: 264,
         fontSize: 18,
         filled: true,
       });
-      this.makeButton(H * 0.69, "SHARE  ↗", () => this.share(shareData), { filled: true });
-      this.makeButton(H * 0.77, "PLAY AGAIN", () => this.playAgain(), { filled: false });
-      this.linkButton(H * 0.85, "MENU", () => this.toMenu());
+      createButton(this, cx, H * 0.69, "SHARE  ↗", () => this.share(shareData), { filled: true });
+      createButton(this, cx, H * 0.77, "PLAY AGAIN", () => this.playAgain(), { filled: false });
+      createLinkButton(this, cx, H * 0.85, "MENU", () => this.toMenu(), 18);
     } else {
-      this.makeButton(H * 0.655, "SHARE  ↗", () => this.share(shareData), { filled: true });
-      this.makeButton(H * 0.735, "PLAY AGAIN", () => this.playAgain(), { filled: false });
-      this.linkButton(H * 0.815, "MENU", () => this.toMenu());
+      createButton(this, cx, H * 0.655, "SHARE  ↗", () => this.share(shareData), { filled: true });
+      createButton(this, cx, H * 0.735, "PLAY AGAIN", () => this.playAgain(), { filled: false });
+      createLinkButton(this, cx, H * 0.815, "MENU", () => this.toMenu(), 18);
     }
 
     showBanner(this); // bottom ad banner (placeholder) when ads are active
@@ -182,75 +184,9 @@ export class GameOverScene extends Phaser.Scene {
     y: number,
     str: string,
     size: number,
-    color: string,
+    color: string = UI.TEXT,
     weight: "bold" | "normal" = "bold"
   ): Phaser.GameObjects.Text {
-    return this.add
-      .text(GAME.WIDTH / 2, y, str, {
-        fontFamily: UI.FONT,
-        fontSize: `${size}px`,
-        color,
-        fontStyle: weight,
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
-  }
-
-  private makeButton(
-    y: number,
-    label: string,
-    onClick: () => void,
-    opts: { w?: number; fontSize?: number; filled?: boolean } = {}
-  ): { setText: (s: string) => void } {
-    const w = opts.w ?? 196;
-    const h = 54;
-    const fontSize = opts.fontSize ?? 24;
-    const filled = opts.filled ?? true;
-    const accent = Phaser.Display.Color.HexStringToColor(UI.ACCENT).color;
-    const x = GAME.WIDTH / 2;
-    const c = this.add.container(x, y);
-
-    let txt: Phaser.GameObjects.Text;
-    if (filled) {
-      const bg = this.add.image(0, 0, TEX.pad).setDisplaySize(w, h).setTint(accent);
-      txt = this.add
-        .text(0, 0, label, { fontFamily: UI.FONT, fontSize: `${fontSize}px`, color: "#07221f", fontStyle: "bold" })
-        .setOrigin(0.5)
-        .setResolution(3);
-      c.add([bg, txt]);
-      c.on("pointerover", () => bg.setTint(0xffffff));
-      c.on("pointerout", () => bg.setTint(accent));
-      this.tweens.add({ targets: c, scale: { from: 1, to: 1.04 }, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
-    } else {
-      const bg = this.add.rectangle(0, 0, w, h, 0x16233d, 1).setStrokeStyle(2, accent, 1);
-      txt = this.add
-        .text(0, 0, label, { fontFamily: UI.FONT, fontSize: `${fontSize}px`, color: UI.ACCENT, fontStyle: "bold" })
-        .setOrigin(0.5)
-        .setResolution(2);
-      c.add([bg, txt]);
-    }
-    c.setInteractive({
-      useHandCursor: true,
-      hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-    });
-    c.on("pointerup", onClick);
-    return { setText: (s: string) => txt.setText(s) };
-  }
-
-  private linkButton(y: number, label: string, onClick: () => void): void {
-    const t = this.add
-      .text(GAME.WIDTH / 2, y, label, {
-        fontFamily: UI.FONT,
-        fontSize: "18px",
-        color: UI.TEXT_DIM,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2)
-      .setInteractive({ useHandCursor: true });
-    t.on("pointerover", () => t.setColor(UI.ACCENT));
-    t.on("pointerout", () => t.setColor(UI.TEXT_DIM));
-    t.on("pointerup", onClick);
+    return createText(this, GAME.WIDTH / 2, y, str, size, color, 0.5, 0.5, weight);
   }
 }

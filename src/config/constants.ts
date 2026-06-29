@@ -39,6 +39,25 @@ export const COLORS: Record<Sym, number> = {
 /** The reference height the layout was tuned at (used to scale fall speed). */
 export const DESIGN_HEIGHT = 800;
 
+/** Logical-height clamp applied at startup when matching the device aspect. */
+export const LAYOUT = {
+  MIN_HEIGHT: 720,
+  MAX_HEIGHT: 1180,
+} as const;
+
+/**
+ * Gameplay / juice timing (ms) — the feel-affecting durations, gathered so the
+ * whole game can be re-timed in one place. Purely cosmetic micro-flashes stay
+ * inline at their tween for readability.
+ */
+export const TIMING = {
+  SPAWN_GRACE: 900, //     hold new spawns at each phase start (rule-card breather)
+  RULE_CARD_HOLD: 1900, // how long the rule card stays before it fades
+  LOW_LIFE_PULSE: 900, //  half-cycle of the last-life danger frame
+  GAMEOVER_HANG: 360, //   pause on the death shake before fading to game over
+  SCENE_FADE: 260, //      scene fade in/out
+} as const;
+
 /**
  * Logical resolution. WIDTH is fixed at 480; HEIGHT is set once at startup
  * (main.ts) to match the device's available aspect ratio so the canvas fills
@@ -147,6 +166,9 @@ const SPEED = {
   FAST: { fall: 460, spawn: 760 },
 } as const;
 
+/** Display names for the three speed tiers (phases cycle through them in order). */
+export const SPEED_NAMES = ["SLOW", "MEDIUM", "FAST"] as const;
+
 /**
  * Endless run, 9 phases = 3 rules (shape → colour → cross) cycled at 3 speed
  * tiers. The same three rules play through at one speed, then repeat faster,
@@ -233,6 +255,6 @@ export const DEV = {
   // you ship or upload to TestFlight / Play.
   ENABLED: false,
   /** Gameplay time-scale presets (1 = full speed; lower = slower for testing). */
-  SPEEDS: [1, 0.75, 0.5, 0.35] as number[],
+  SPEEDS: [1, 0.75, 0.5, 0.35] as const,
   DEFAULT_SPEED_INDEX: 2, // 0.5×
 } as const;

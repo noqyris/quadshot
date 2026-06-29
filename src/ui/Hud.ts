@@ -8,10 +8,12 @@ import {
   SCORE,
   Sym,
   TEX,
+  TIMING,
   UI,
 } from "../config/constants";
 import { MatchRules } from "../systems/MatchRules";
 import { buildRuleVisual, ruleInstruction, ruleTitle, speedName } from "./rules";
+import { createText } from "./widgets";
 
 type LegendObj =
   | Phaser.GameObjects.Image
@@ -138,15 +140,7 @@ export class Hud {
   }
 
   private legendText(str: string, size = 12, color: string = UI.TEXT_DIM): Phaser.GameObjects.Text {
-    return this.scene.add
-      .text(0, 0, str, {
-        fontFamily: UI.FONT,
-        fontSize: `${size}px`,
-        color,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
+    return createText(this.scene, 0, 0, str, size, color);
   }
 
   /** Lay a list of measured items out in a horizontal row, centred at local y. */
@@ -222,36 +216,20 @@ export class Hud {
     const c = this.scene.add.container(0, 0).setDepth(120);
     this.ruleCard = c;
 
-    const meta = this.scene.add
-      .text(cx, cy - 78, `PHASE ${phase.index}   ·   ${speedName(phase.index)}`, {
-        fontFamily: UI.FONT,
-        fontSize: "13px",
-        color: UI.ACCENT,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
+    const meta = createText(
+      this.scene,
+      cx,
+      cy - 78,
+      `PHASE ${phase.index}   ·   ${speedName(phase.index)}`,
+      13,
+      UI.ACCENT
+    );
 
-    const title = this.scene.add
-      .text(cx, cy - 42, ruleTitle(phase.mode), {
-        fontFamily: UI.FONT,
-        fontSize: "40px",
-        color: UI.TEXT,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
+    const title = createText(this.scene, cx, cy - 42, ruleTitle(phase.mode), 40, UI.TEXT)
       .setResolution(3)
       .setShadow(0, 0, UI.ACCENT, 18, true, true);
 
-    const instr = this.scene.add
-      .text(cx, cy + 2, ruleInstruction(phase.mode), {
-        fontFamily: UI.FONT,
-        fontSize: "17px",
-        color: UI.TEXT_DIM,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
+    const instr = createText(this.scene, cx, cy + 2, ruleInstruction(phase.mode), 17, UI.TEXT_DIM);
 
     const demo = this.scene.add.container(0, 0);
     buildRuleVisual(this.scene, demo, cx, cy + 52, phase.mode);
@@ -266,7 +244,7 @@ export class Hud {
     this.scene.tweens.add({
       targets: c,
       alpha: 0,
-      delay: 1900,
+      delay: TIMING.RULE_CARD_HOLD,
       duration: 420,
       ease: "Quad.in",
       onComplete: () => {

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME, MatchMode, UI } from "../config/constants";
 import { buildRuleVisual, ruleInstruction, ruleTitle } from "./rules";
+import { ACCENT_NUM, createButton, createText } from "./widgets";
 
 // The three rules, in the order the player first meets them.
 const PAGES: MatchMode[] = ["identity", "color", "cross"];
@@ -23,35 +24,23 @@ export function openTutorial(scene: Phaser.Scene, onDone: () => void): void {
   const content = scene.add.container(0, 0);
   root.add(content);
 
-  root.add(txt(scene, cx, cy + 150, "Slide to aim   •   Tap a pad to fire", 14, UI.TEXT_DIM));
+  root.add(createText(scene, cx, cy + 150, "Slide to aim   •   Tap a pad to fire", 14, UI.TEXT_DIM));
 
-  const accent = Phaser.Display.Color.HexStringToColor(UI.ACCENT).color;
   const dots = PAGES.map((_, i) =>
     scene.add.circle(cx - (PAGES.length - 1) * 9 + i * 18, cy + 192, 4, 0x33415e)
   );
   dots.forEach((d) => root.add(d));
 
-  const nextBtn = scene.add.container(cx, cy + 234);
-  const nextBg = scene.add.rectangle(0, 0, 150, 46, 0x16233d, 1).setStrokeStyle(2, accent, 1);
-  const nextTxt = txt(scene, 0, 0, "NEXT", 18, UI.ACCENT);
-  nextBtn.add([nextBg, nextTxt]);
-  nextBtn.setInteractive({
-    useHandCursor: true,
-    hitArea: new Phaser.Geom.Rectangle(-75, -23, 150, 46),
-    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-  });
-  root.add(nextBtn);
-
   let page = 0;
   const render = () => {
     content.removeAll(true);
     const mode = PAGES[page];
-    content.add(txt(scene, cx, cy - 130, ruleTitle(mode), 30, UI.TEXT));
-    content.add(txt(scene, cx, cy + 80, ruleInstruction(mode), 17, UI.TEXT_DIM));
+    content.add(createText(scene, cx, cy - 130, ruleTitle(mode), 30, UI.TEXT));
+    content.add(createText(scene, cx, cy + 80, ruleInstruction(mode), 17, UI.TEXT_DIM));
     buildRuleVisual(scene, content, cx, cy - 6, mode);
 
-    dots.forEach((d, i) => d.setFillStyle(i === page ? accent : 0x33415e));
-    nextTxt.setText(page === PAGES.length - 1 ? "GOT IT" : "NEXT");
+    dots.forEach((d, i) => d.setFillStyle(i === page ? ACCENT_NUM : 0x33415e));
+    next.setLabel(page === PAGES.length - 1 ? "GOT IT" : "NEXT");
   };
 
   const advance = () => {
@@ -64,26 +53,13 @@ export function openTutorial(scene: Phaser.Scene, onDone: () => void): void {
     }
   };
 
-  nextBtn.on("pointerup", advance);
+  const next = createButton(scene, cx, cy + 234, "NEXT", advance, {
+    w: 150,
+    h: 46,
+    fontSize: 18,
+    filled: false,
+  });
+  root.add(next.container);
   dim.on("pointerup", advance);
   render();
-}
-
-function txt(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  str: string,
-  size: number,
-  color: string
-): Phaser.GameObjects.Text {
-  return scene.add
-    .text(x, y, str, {
-      fontFamily: UI.FONT,
-      fontSize: `${size}px`,
-      color,
-      fontStyle: "bold",
-    })
-    .setOrigin(0.5)
-    .setResolution(2);
 }

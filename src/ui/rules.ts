@@ -1,6 +1,7 @@
 import Phaser from "phaser";
-import { COLORS, MatchMode, Sym, TEX, UI } from "../config/constants";
+import { COLORS, MatchMode, SPEED_NAMES, Sym, TEX, UI } from "../config/constants";
 import { MatchRules } from "../systems/MatchRules";
+import { createText } from "./widgets";
 
 /**
  * Single source of truth for how each rule is explained to the player — used by
@@ -29,9 +30,8 @@ export function ruleInstruction(mode: MatchMode): string {
   }
 }
 
-const SPEEDS = ["SLOW", "MEDIUM", "FAST"];
 export function speedName(phaseIndex: number): string {
-  return SPEEDS[Math.min(SPEEDS.length - 1, Math.floor((phaseIndex - 1) / 3))];
+  return SPEED_NAMES[Math.min(SPEED_NAMES.length - 1, Math.floor((phaseIndex - 1) / 3))];
 }
 
 function icon(
@@ -46,15 +46,7 @@ function icon(
 }
 
 function arrow(scene: Phaser.Scene, x: number, y: number, size: number): Phaser.GameObjects.Text {
-  return scene.add
-    .text(x, y, "→", {
-      fontFamily: UI.FONT,
-      fontSize: `${size}px`,
-      color: UI.TEXT_DIM,
-      fontStyle: "bold",
-    })
-    .setOrigin(0.5)
-    .setResolution(2);
+  return createText(scene, x, y, "→", size, UI.TEXT_DIM);
 }
 
 /** Draw the little "what to do" demo for a rule, centred at (cx, cy), into `parent`. */
@@ -72,17 +64,7 @@ export function buildRuleVisual(
     parent.add(icon(scene, cx - 58 * s, cy, Sym.TRIANGLE, red, 44 * s));
     parent.add(arrow(scene, cx, cy, 24 * s));
     parent.add(icon(scene, cx + 58 * s, cy, Sym.CIRCLE, red, 44 * s));
-    parent.add(
-      scene.add
-        .text(cx, cy + 36 * s, "same COLOR", {
-          fontFamily: UI.FONT,
-          fontSize: `${12 * s}px`,
-          color: UI.TEXT_DIM,
-          fontStyle: "bold",
-        })
-        .setOrigin(0.5)
-        .setResolution(2)
-    );
+    parent.add(createText(scene, cx, cy + 36 * s, "same COLOR", 12 * s, UI.TEXT_DIM));
   } else if (mode === "cross") {
     const pairs = MatchRules.crossLegend();
     const spread = 92 * s;

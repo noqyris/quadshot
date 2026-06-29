@@ -72,13 +72,18 @@ class ShareService {
       await navigator.share({ title: SHARE.TITLE, text, url: SHARE.URL });
       return;
     }
-    // Fallback: download the card image and copy the message.
+    // Fallback: download the card image and copy the message. The anchor must be
+    // in the DOM for the click in some browsers, and the object URL has to stay
+    // valid until the download actually starts — so defer the revoke.
     if (file) {
+      const url = URL.createObjectURL(file);
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(file);
+      a.href = url;
       a.download = "quadshot.png";
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(a.href);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     }
     try {
       await navigator.clipboard?.writeText(text);

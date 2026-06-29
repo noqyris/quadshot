@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { DEV, GAME } from "./config/constants";
+import { DEV, GAME, LAYOUT } from "./config/constants";
 import { BootScene } from "./scenes/BootScene";
 import { MenuScene } from "./scenes/MenuScene";
 import { GameScene } from "./scenes/GameScene";
@@ -36,7 +36,9 @@ if (DEV.ENABLED) {
   const w = (el?.clientWidth || window.innerWidth) ?? GAME.WIDTH;
   const h = (el?.clientHeight || window.innerHeight) ?? GAME.HEIGHT;
   const aspect = h > 0 && w > 0 ? h / w : 800 / 480;
-  GAME.HEIGHT = Math.round(Phaser.Math.Clamp(GAME.WIDTH * aspect, 720, 1180));
+  GAME.HEIGHT = Math.round(
+    Phaser.Math.Clamp(GAME.WIDTH * aspect, LAYOUT.MIN_HEIGHT, LAYOUT.MAX_HEIGHT)
+  );
 })();
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -65,11 +67,11 @@ const config: Phaser.Types.Core.GameConfig = {
 const game = new Phaser.Game(config);
 
 // Expose the game instance for debugging / automated smoke tests.
-(window as unknown as { game?: Phaser.Game }).game = game;
+window.game = game;
 
 if (DEV.ENABLED) {
   void import("./ui/ShareCard").then(({ buildShareCard }) => {
-    (window as unknown as { __shareCard?: (d: unknown) => string }).__shareCard = (d) =>
+    window.__shareCard = (d) =>
       buildShareCard(d as Parameters<typeof buildShareCard>[0]).toDataURL("image/png");
   });
 }

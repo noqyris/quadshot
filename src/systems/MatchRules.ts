@@ -48,11 +48,6 @@ export const MatchRules = {
     }
   },
 
-  /** Which symbol does `projShape` destroy under cross-mapping? */
-  crossVictim(projShape: Sym): Sym {
-    return CROSS_KILLS[projShape];
-  },
-
   /** Ordered legend pairs ([fired, destroys]) for the HUD in cross mode. */
   crossLegend(): Array<[Sym, Sym]> {
     return CROSS_CYCLE.map((s) => [s, CROSS_KILLS[s]] as [Sym, Sym]);

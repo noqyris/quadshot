@@ -11,6 +11,7 @@ import { createBackground } from "../ui/Background";
 import { showBanner } from "../ui/Banner";
 import { openSettings } from "../ui/SettingsPanel";
 import { openTutorial } from "../ui/TutorialPanel";
+import { createButton, createLinkButton, createText } from "../ui/widgets";
 import { Monetization } from "../systems/Monetization";
 import { Sfx } from "../systems/Sfx";
 import { Storage } from "../systems/Storage";
@@ -34,28 +35,12 @@ export class MenuScene extends Phaser.Scene {
     this.input.once(Phaser.Input.Events.POINTER_DOWN, () => Sfx.unlock());
 
     // Title.
-    const title = this.add
-      .text(GAME.WIDTH / 2, H * 0.2, "QUADSHOT", {
-        fontFamily: UI.FONT,
-        fontSize: "58px",
-        color: UI.TEXT,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
+    const title = createText(this, GAME.WIDTH / 2, H * 0.2, "QUADSHOT", 58, UI.TEXT)
       .setResolution(3)
       .setShadow(0, 0, UI.ACCENT, 24, true, true);
     this.fitWidth(title, GAME.WIDTH - 56);
 
-    this.add
-      .text(GAME.WIDTH / 2, H * 0.252, "REFLEX ARCADE", {
-        fontFamily: UI.FONT,
-        fontSize: "16px",
-        color: UI.ACCENT,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2)
-      .setAlpha(0.9);
+    createText(this, GAME.WIDTH / 2, H * 0.252, "REFLEX ARCADE", 16, UI.ACCENT).setAlpha(0.9);
 
     // The four symbols, gently floating.
     const spread = 84;
@@ -83,46 +68,35 @@ export class MenuScene extends Phaser.Scene {
       "Desktop:  ← →  move   •   1–4  fire",
     ];
     how.forEach((line, i) => {
-      const t = this.add
-        .text(GAME.WIDTH / 2, H * 0.49 + i * 26, line, {
-          fontFamily: UI.FONT,
-          fontSize: "15px",
-          color: UI.TEXT_DIM,
-        })
-        .setOrigin(0.5)
-        .setResolution(2);
+      const t = createText(this, GAME.WIDTH / 2, H * 0.49 + i * 26, line, 15, UI.TEXT_DIM, 0.5, 0.5, "normal");
       this.fitWidth(t, GAME.WIDTH - 40);
     });
 
     // Best score.
-    this.bestText = this.add
-      .text(GAME.WIDTH / 2, H * 0.625, "BEST  0", {
-        fontFamily: UI.FONT,
-        fontSize: "18px",
-        color: UI.TEXT,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
+    this.bestText = createText(this, GAME.WIDTH / 2, H * 0.625, "BEST  0", 18, UI.TEXT);
     this.refreshBest();
 
     // Play button.
-    this.makeButton(GAME.WIDTH / 2, H * 0.74, "PLAY", () => this.startGame());
+    createButton(this, GAME.WIDTH / 2, H * 0.74, "PLAY", () => this.startGame(), {
+      w: 168,
+      h: 52,
+      fontSize: 24,
+    });
 
     // How-to-play link.
-    this.linkButton(GAME.WIDTH / 2, H * 0.83, "HOW TO PLAY", () =>
+    createLinkButton(this, GAME.WIDTH / 2, H * 0.83, "HOW TO PLAY", () =>
       this.openTutorialOverlay(false)
     );
 
     // Settings gear (top-right corner).
-    this.linkButton(GAME.WIDTH - 22, 22, "⚙", () => this.openSettingsOverlay(), 24);
+    createLinkButton(this, GAME.WIDTH - 22, 22, "⚙", () => this.openSettingsOverlay(), 24);
 
     // Bottom ad banner (placeholder; hidden once ads are removed).
     this.menuBanner = showBanner(this);
 
     // Allow Enter / Space to start.
-    this.input.keyboard?.on("keydown-ENTER", () => this.startGame());
-    this.input.keyboard?.on("keydown-SPACE", () => this.startGame());
+    this.input.keyboard?.once("keydown-ENTER", () => this.startGame());
+    this.input.keyboard?.once("keydown-SPACE", () => this.startGame());
 
     // First run: show the tutorial automatically.
     void Storage.getTutorialSeen().then((seen) => {
@@ -134,28 +108,6 @@ export class MenuScene extends Phaser.Scene {
     void Storage.getBestScore().then((best) =>
       this.bestText.setText(`BEST  ${best.toLocaleString()}`)
     );
-  }
-
-  private linkButton(
-    x: number,
-    y: number,
-    label: string,
-    onClick: () => void,
-    size = 16
-  ): void {
-    const t = this.add
-      .text(x, y, label, {
-        fontFamily: UI.FONT,
-        fontSize: `${size}px`,
-        color: UI.TEXT_DIM,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(2)
-      .setInteractive({ useHandCursor: true });
-    t.on("pointerover", () => t.setColor(UI.ACCENT));
-    t.on("pointerout", () => t.setColor(UI.TEXT_DIM));
-    t.on("pointerup", onClick);
   }
 
   private openSettingsOverlay(): void {
@@ -184,44 +136,6 @@ export class MenuScene extends Phaser.Scene {
   /** Shrink a text object uniformly if it is wider than `max` (keeps it on-screen). */
   private fitWidth(t: Phaser.GameObjects.Text, max: number): void {
     if (t.width > max) t.setScale(max / t.width);
-  }
-
-  private makeButton(x: number, y: number, label: string, onClick: () => void): void {
-    const w = 168;
-    const h = 52;
-    const accent = Phaser.Display.Color.HexStringToColor(UI.ACCENT).color;
-    // Bg + text live in a container so the breathing tween scales the container
-    // (base scale 1) and never clobbers the image's setDisplaySize scaling.
-    const c = this.add.container(x, y);
-    const bg = this.add.image(0, 0, TEX.pad).setDisplaySize(w, h).setTint(accent);
-    const txt = this.add
-      .text(0, 0, label, {
-        fontFamily: UI.FONT,
-        fontSize: "24px",
-        color: "#07221f",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setResolution(3);
-    c.add([bg, txt]);
-    c.setInteractive({
-      useHandCursor: true,
-      hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-    });
-
-    this.tweens.add({
-      targets: c,
-      scale: { from: 1, to: 1.04 },
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.inOut",
-    });
-
-    c.on("pointerover", () => bg.setTint(0xffffff));
-    c.on("pointerout", () => bg.setTint(accent));
-    c.on("pointerup", onClick);
   }
 
   private startGame(): void {

@@ -12,7 +12,9 @@ import {
   PROJECTILE,
   PhaseDef,
   SCENES,
+  Sym,
   TEX,
+  TIMING,
   UI,
 } from "../config/constants";
 import { Launcher, FireEvent } from "../objects/Launcher";
@@ -38,8 +40,10 @@ export class GameScene extends Phaser.Scene {
 
   private targets!: Phaser.GameObjects.Group;
   private projectiles!: Phaser.GameObjects.Group;
-  private burstEmitters = new Map<number, Phaser.GameObjects.Particles.ParticleEmitter>();
-  private muzzleEmitters = new Map<number, Phaser.GameObjects.Particles.ParticleEmitter>();
+  // Keyed by symbol (one emitter per shape) — the shape is what drives match
+  // logic, so look-ups read the same field everywhere instead of a colour value.
+  private burstEmitters = new Map<Sym, Phaser.GameObjects.Particles.ParticleEmitter>();
+  private muzzleEmitters = new Map<Sym, Phaser.GameObjects.Particles.ParticleEmitter>();
 
   private running = false;
   private paused = false;
@@ -168,7 +172,7 @@ export class GameScene extends Phaser.Scene {
           emitting: false,
         })
         .setDepth(15);
-      this.burstEmitters.set(color, burst);
+      this.burstEmitters.set(shape, burst);
 
       const muzzle = this.add
         .particles(0, 0, TEX.particle, {
@@ -182,7 +186,7 @@ export class GameScene extends Phaser.Scene {
           emitting: false,
         })
         .setDepth(15);
-      this.muzzleEmitters.set(color, muzzle);
+      this.muzzleEmitters.set(shape, muzzle);
     });
   }
 
@@ -197,7 +201,7 @@ export class GameScene extends Phaser.Scene {
       if (!proj) return;
       proj.fire(e.x, e.y, e.shape, e.color);
       proj.setDepth(8);
-      this.muzzleEmitters.get(e.color)?.explode(8, e.x, e.y);
+      this.muzzleEmitters.get(e.shape)?.explode(8, e.x, e.y);
       Sfx.fire();
       Haptics.fire();
     } catch (err) {
@@ -213,7 +217,7 @@ export class GameScene extends Phaser.Scene {
     this.hud.setLegend(phase.mode, phase.symbols);
     this.hud.showRuleCard(phase);
     // Brief breather: hold new spawns so the rule card is readable / fair.
-    this.spawnGraceUntil = this.time.now + 900;
+    this.spawnGraceUntil = this.time.now + TIMING.SPAWN_GRACE;
   }
 
   private onPhaseChange(phase: PhaseDef): void {
@@ -313,7 +317,7 @@ export class GameScene extends Phaser.Scene {
   // --- Outcomes ---------------------------------------------------------------
 
   private handleKill(proj: Projectile, target: Target): void {
-    const { x, y, color } = target;
+    const { x, y, color, shape } = target;
     const result = this.scoreMgr.registerKill();
     this.kills += 1;
     this.maxCombo = Math.max(this.maxCombo, result.combo);
@@ -323,7 +327,7 @@ export class GameScene extends Phaser.Scene {
 
     // Juice scales up with the multiplier so streaks feel bigger.
     const burst = 12 + Math.min(result.multiplier, 5) * 5;
-    this.burstEmitters.get(color)?.explode(burst, x, y);
+    this.burstEmitters.get(shape)?.explode(burst, x, y);
     this.spawnRing(x, y, color, result.multiplier);
     this.spawnScorePopup(x, y, result.points, color);
 
@@ -386,7 +390,7 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({
         targets: this.lowLifeFrame,
         alpha: { from: 0.1, to: 0.3 },
-        duration: 900,
+        duration: TIMING.LOW_LIFE_PULSE,
         yoyo: true,
         repeat: -1,
         ease: "Sine.inOut",
@@ -458,8 +462,8 @@ export class GameScene extends Phaser.Scene {
     const canContinue =
       MONETIZATION.ENABLED && this.continuesUsed < MONETIZATION.MAX_CONTINUES;
 
-    this.time.delayedCall(360, () => {
-      this.cameras.main.fadeOut(260, 7, 11, 26);
+    this.time.delayedCall(TIMING.GAMEOVER_HANG, () => {
+      this.cameras.main.fadeOut(TIMING.SCENE_FADE, 7, 11, 26);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
         this.scene.start(SCENES.GAME_OVER, { run, canContinue, continues: this.continuesUsed });
       });
@@ -528,7 +532,9 @@ export class GameScene extends Phaser.Scene {
     if (this.pauseLayer) return;
     const c = this.add.container(0, 0).setDepth(160);
     const dim = this.add
-      .rectangle(GAME.WIDTH / 2, GAME.HEIGHT / 2, GAME.WIDTH, GAME.HEIGHT, 0x05070f, 0.78)
+      // Noticeably darker than the play-field background so "paused" reads clearly
+      // (the old 0x05070f was within ~1 RGB step of the bg and barely visible).
+      .rectangle(GAME.WIDTH / 2, GAME.HEIGHT / 2, GAME.WIDTH, GAME.HEIGHT, 0x02040c, 0.86)
       .setInteractive(); // swallow taps behind the menu
     const title = this.add
       .text(GAME.WIDTH / 2, GAME.HEIGHT * 0.36, "PAUSED", {
@@ -576,6 +582,10 @@ export class GameScene extends Phaser.Scene {
     this.appStateHandle?.remove();
     this.appStateHandle = undefined;
     this.game.events.off(Phaser.Core.Events.BLUR, this.pauseGame, this);
+    // Phaser destroys the emitter GameObjects + pause-layer children (and their
+    // listeners) on scene shutdown; just drop our references to them here.
+    this.burstEmitters.clear();
+    this.muzzleEmitters.clear();
   }
 
   // --- Dev tools (only built when DEV.ENABLED) --------------------------------

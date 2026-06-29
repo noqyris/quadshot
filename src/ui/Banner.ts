@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME, MONETIZATION, UI } from "../config/constants";
 import { Monetization } from "../systems/Monetization";
+import { createText } from "./widgets";
 
 /**
  * Bottom ad banner — shown on non-gameplay screens (menu / game over) only, so
@@ -19,9 +20,9 @@ export function showBanner(scene: Phaser.Scene): Phaser.GameObjects.Container | 
   const bg = scene.add
     .rectangle(W / 2, cy, W, h, 0x0c1426, 1)
     .setStrokeStyle(1, 0x223052, 1);
-  const tag = label(scene, 14, cy, "AD", 10, UI.TEXT_DIM, 0);
-  const placeholder = label(scene, W / 2, cy, "your ad here", 13, "#4b5a7a", 0.5);
-  const remove = label(
+  const tag = createText(scene, 14, cy, "AD", 10, UI.TEXT_DIM, 0);
+  const placeholder = createText(scene, W / 2, cy, "your ad here", 13, "#4b5a7a", 0.5);
+  const remove = createText(
     scene,
     W - 12,
     cy,
@@ -42,24 +43,4 @@ export function showBanner(scene: Phaser.Scene): Phaser.GameObjects.Container | 
 
   c.add([bg, tag, placeholder, remove]);
   return c;
-}
-
-function label(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  str: string,
-  size: number,
-  color: string,
-  originX: number
-): Phaser.GameObjects.Text {
-  return scene.add
-    .text(x, y, str, {
-      fontFamily: UI.FONT,
-      fontSize: `${size}px`,
-      color,
-      fontStyle: "bold",
-    })
-    .setOrigin(originX, 0.5)
-    .setResolution(2);
 }
