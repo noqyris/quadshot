@@ -102,6 +102,12 @@ class SfxService {
     const seq = [440, 349.23, 261.63, 174.61];
     seq.forEach((f, i) => this.note(f, 0.28, "triangle", 0.2, i * 0.13));
   }
+
+  /** Bright ascending arpeggio when a new phase begins. */
+  phaseUp(): void {
+    const seq = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+    seq.forEach((f, i) => this.note(f, 0.16, "triangle", 0.16, i * 0.07));
+  }
 }
 
 export const Sfx = new SfxService();

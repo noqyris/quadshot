@@ -25,6 +25,7 @@ export class BootScene extends Phaser.Scene {
     this.makeParticleTexture();
     this.makeRingTexture();
     this.makeGlowTexture();
+    this.makeBloomTexture();
 
     // Restore persisted settings + monetization state before the menu.
     void Promise.all([
@@ -45,10 +46,10 @@ export class BootScene extends Phaser.Scene {
   // --- Controller symbols: hollow neon outlines (white; tinted at runtime) ----
 
   private makeShapeTexture(shape: Sym): void {
-    const size = 40 * SS;
+    const size = 42 * SS; // slight headroom for the halo
     const c = size / 2;
-    const r = size * 0.3;
-    const baseW = 3.4 * SS; // core stroke width
+    const r = size * 0.286; // keeps the symbol ~same on-screen size as before
+    const baseW = 3.6 * SS; // core stroke width
     const g = this.add.graphics();
 
     // Draw the symbol outline at a given stroke width + alpha.
@@ -80,8 +81,9 @@ export class BootScene extends Phaser.Scene {
       }
     };
 
-    // Outer glow (fat, faint strokes) then the bright core outline.
-    for (let i = 3; i >= 1; i--) outline(baseW + i * 7, 0.05 * i);
+    // Soft neon halo (kept narrow so hollow shapes stay hollow — no filled-in
+    // centre), then the bright core stroke on top for a crisp signature edge.
+    for (let i = 5; i >= 1; i--) outline(baseW + i * 4.5, 0.05 * i);
     outline(baseW, 1);
 
     g.generateTexture(TEX.shape(shape), size, size);
@@ -133,12 +135,19 @@ export class BootScene extends Phaser.Scene {
     // Dark body.
     g.fillStyle(0x141a2e, 1);
     g.fillCircle(c, c, r);
-    // Lower belly shade (kept inside the core).
+    // Lower belly shade for depth (two stacked, kept inside the core).
     g.fillStyle(0x000000, 0.3);
     g.fillCircle(c, c + r * 0.32, r * 0.55);
-    // Soft top gloss.
-    g.fillStyle(0xffffff, 0.08);
-    g.fillEllipse(c, c - r * 0.42, r * 1.0, r * 0.5);
+    g.fillStyle(0x000000, 0.25);
+    g.fillCircle(c, c + r * 0.4, r * 0.45);
+    // Soft top gloss — wider/taller/brighter highlight for a glassy key feel.
+    g.fillStyle(0xffffff, 0.14);
+    g.fillEllipse(c, c - r * 0.42, r * 1.15, r * 0.62);
+    // Crisp specular streak near the top edge.
+    g.lineStyle(4, 0xffffff, 0.35);
+    g.beginPath();
+    g.arc(c, c, r * 0.82, Phaser.Math.DegToRad(210), Phaser.Math.DegToRad(330), false);
+    g.strokePath();
     // Faint inner rim for definition.
     g.lineStyle(3, 0x33415e, 0.6);
     g.strokeCircle(c, c, r);
@@ -154,13 +163,16 @@ export class BootScene extends Phaser.Scene {
     const r = 64;
     const g = this.add.graphics();
 
-    // Outer glow.
+    // Soft halo — widest strokes are the FAINTEST so it reads as a gentle bloom,
+    // not a thick band. Brightness concentrates toward the rim.
     for (let i = 6; i >= 1; i--) {
-      g.lineStyle(3 + i * 5, 0xffffff, 0.05 * i);
+      g.lineStyle(3 + i * 4, 0xffffff, 0.03 * (7 - i));
       g.strokeCircle(c, c, r);
     }
-    // Bright rim.
-    g.lineStyle(7, 0xffffff, 1);
+    // A thin, crisp neon rim with a hairline highlight — clean, not chunky.
+    g.lineStyle(5, 0xffffff, 1);
+    g.strokeCircle(c, c, r);
+    g.lineStyle(2, 0xffffff, 1);
     g.strokeCircle(c, c, r);
 
     g.generateTexture(TEX.padRing, size, size);
@@ -172,19 +184,26 @@ export class BootScene extends Phaser.Scene {
   private makeParticleTexture(): void {
     const size = 32;
     const g = this.add.graphics();
-    for (let i = 6; i >= 1; i--) {
-      g.fillStyle(0xffffff, i >= 5 ? 1 : 0.12 * i);
-      g.fillCircle(size / 2, size / 2, (size / 2) * (i / 6));
+    // Brighter core + a slightly larger soft halo for juicier sparks.
+    for (let i = 7; i >= 1; i--) {
+      g.fillStyle(0xffffff, i >= 5 ? 1 : 0.14 * i);
+      g.fillCircle(size / 2, size / 2, (size / 2) * (i / 6.4));
     }
     g.generateTexture(TEX.particle, size, size);
     g.destroy();
   }
 
   private makeRingTexture(): void {
-    const size = 96;
+    const size = 112;
+    const c = size / 2;
     const g = this.add.graphics();
-    g.lineStyle(7, 0xffffff, 1);
-    g.strokeCircle(size / 2, size / 2, size / 2 - 6);
+    // Soft outer halo, then a crisp core ring — gives the kill burst depth.
+    for (let i = 4; i >= 1; i--) {
+      g.lineStyle(2 + i * 3, 0xffffff, 0.06 * i);
+      g.strokeCircle(c, c, c - 10 + i * 4);
+    }
+    g.lineStyle(8, 0xffffff, 1);
+    g.strokeCircle(c, c, c - 10);
     g.generateTexture(TEX.ring, size, size);
     g.destroy();
   }
@@ -197,6 +216,19 @@ export class BootScene extends Phaser.Scene {
       g.fillCircle(size / 2, size / 2, (size / 2) * (i / 40));
     }
     g.generateTexture(TEX.glow, size, size);
+    g.destroy();
+  }
+
+  /** Large, very soft radial bloom — used behind the title and as ambient orbs. */
+  private makeBloomTexture(): void {
+    const size = 384;
+    const c = size / 2;
+    const g = this.add.graphics();
+    for (let i = 60; i >= 1; i--) {
+      g.fillStyle(0xffffff, 0.02);
+      g.fillCircle(c, c, c * (i / 60) * (i / 60)); // quadratic → tight bright core, soft edge
+    }
+    g.generateTexture(TEX.bloom, size, size);
     g.destroy();
   }
 }

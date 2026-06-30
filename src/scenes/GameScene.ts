@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import type { PluginListenerHandle } from "@capacitor/core";
 import {
   ALL_SYMBOLS,
+  CLIMB,
   COLORS,
   DEV,
   GAME,
@@ -55,6 +56,10 @@ export class GameScene extends Phaser.Scene {
 
   // Hold new spawns until this scene-time (ms) — a breather on each phase start.
   private spawnGraceUntil = 0;
+
+  // Per-phase "climb": how far (logical px) the launcher + miss line have risen.
+  private climb = 0;
+  private missLineGfx!: Phaser.GameObjects.Graphics;
 
   // Persistent danger frame shown on the last life.
   private lowLifeFrame!: Phaser.GameObjects.Rectangle;
@@ -109,7 +114,7 @@ export class GameScene extends Phaser.Scene {
     // HUD.
     this.hud = new Hud(this);
     this.hud.setLives(this.scoreMgr.lives);
-    this.hud.setScore(0);
+    this.hud.initScore(0);
     void Storage.getBestScore().then((b) => this.hud.setBest(b));
 
     // Per-run state — seeded from `resume` when continuing after a revive.
@@ -124,7 +129,7 @@ export class GameScene extends Phaser.Scene {
     let phaseShown = false;
     if (resume) {
       this.scoreMgr.score = resume.score;
-      this.hud.setScore(resume.score);
+      this.hud.initScore(resume.score);
       // Advance the phase to match the resumed score (fires onPhaseChange → card).
       this.difficulty.update(0, resume.score);
       phaseShown = this.difficulty.getPhase().index !== 1;
@@ -155,6 +160,7 @@ export class GameScene extends Phaser.Scene {
     g.lineStyle(2, 0xff5577, 0.18);
     const y = missLineY();
     g.lineBetween(0, y, GAME.WIDTH, y);
+    this.missLineGfx = g; // moved up as the rack climbs each phase
   }
 
   private buildEmitters(): void {
@@ -218,12 +224,31 @@ export class GameScene extends Phaser.Scene {
     this.hud.showRuleCard(phase);
     // Brief breather: hold new spawns so the rule card is readable / fair.
     this.spawnGraceUntil = this.time.now + TIMING.SPAWN_GRACE;
+    // Climb: raise the rack + miss line a little more each phase so obstacles
+    // have less distance (and time) to travel.
+    this.climb = Math.min(CLIMB.MAX, (phase.index - 1) * CLIMB.PER_PHASE);
+    this.launcher.setLift(this.climb);
+    this.tweens.add({ targets: this.missLineGfx, y: -this.climb, duration: 400, ease: "Quad.out" });
   }
 
   private onPhaseChange(phase: PhaseDef): void {
     this.applyPhase(phase);
-    // A quick celebratory pop on phase-up.
-    this.cameras.main.flash(160, 30, 60, 90);
+    // A celebratory surge on phase-up: a teal camera flash, a brief full-screen
+    // cyan wash, the pad rims flaring, an ascending chime, and haptics.
+    this.cameras.main.flash(220, 26, 90, 110);
+    const wash = this.add
+      .rectangle(GAME.WIDTH / 2, GAME.HEIGHT / 2, GAME.WIDTH, GAME.HEIGHT, 0x5eead4, 0.16)
+      .setDepth(90)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({
+      targets: wash,
+      alpha: 0,
+      duration: 420,
+      ease: "Quad.in",
+      onComplete: () => wash.destroy(),
+    });
+    this.launcher.flarePads();
+    Sfx.phaseUp();
     Haptics.phaseUp();
   }
 
@@ -289,7 +314,7 @@ export class GameScene extends Phaser.Scene {
       const t = obj as Target;
       if (!t.active) continue;
       t.advance(dt);
-      if (t.y >= missLineY()) this.handleMiss(t);
+      if (t.y >= missLineY() - this.climb) this.handleMiss(t);
     }
   }
 
@@ -326,7 +351,8 @@ export class GameScene extends Phaser.Scene {
     target.deactivate();
 
     // Juice scales up with the multiplier so streaks feel bigger.
-    const burst = 12 + Math.min(result.multiplier, 5) * 5;
+    const m = Math.min(result.multiplier, 5);
+    const burst = 12 + m * 5;
     this.burstEmitters.get(shape)?.explode(burst, x, y);
     this.spawnRing(x, y, color, result.multiplier);
     this.spawnScorePopup(x, y, result.points, color);
@@ -530,35 +556,52 @@ export class GameScene extends Phaser.Scene {
 
   private showPauseLayer(): void {
     if (this.pauseLayer) return;
+    const cx = GAME.WIDTH / 2;
     const c = this.add.container(0, 0).setDepth(160);
     const dim = this.add
       // Noticeably darker than the play-field background so "paused" reads clearly
       // (the old 0x05070f was within ~1 RGB step of the bg and barely visible).
-      .rectangle(GAME.WIDTH / 2, GAME.HEIGHT / 2, GAME.WIDTH, GAME.HEIGHT, 0x02040c, 0.86)
+      .rectangle(cx, GAME.HEIGHT / 2, GAME.WIDTH, GAME.HEIGHT, 0x02040c, 0.86)
       .setInteractive(); // swallow taps behind the menu
+    const glow = this.add
+      .image(cx, GAME.HEIGHT * 0.36, TEX.bloom)
+      .setTint(0x5eead4)
+      .setAlpha(0.14)
+      .setScale(2.2, 1.4)
+      .setBlendMode(Phaser.BlendModes.ADD);
     const title = this.add
-      .text(GAME.WIDTH / 2, GAME.HEIGHT * 0.36, "PAUSED", {
+      .text(cx, GAME.HEIGHT * 0.36, "PAUSED", {
         fontFamily: UI.FONT,
         fontSize: "46px",
         color: UI.TEXT,
         fontStyle: "bold",
       })
       .setOrigin(0.5)
-      .setResolution(3);
-    c.add([dim, title]);
-    c.add(this.pauseMenuButton(GAME.HEIGHT * 0.5, "RESUME", () => this.resumeGame()));
-    c.add(
+      .setResolution(3)
+      .setShadow(0, 0, UI.ACCENT, 18, true, true);
+    const buttons = [
+      this.pauseMenuButton(GAME.HEIGHT * 0.5, "RESUME", () => this.resumeGame()),
       this.pauseMenuButton(GAME.HEIGHT * 0.62, "RESTART", () => {
         this.resumeGame();
         this.scene.restart();
-      })
-    );
-    c.add(
+      }),
       this.pauseMenuButton(GAME.HEIGHT * 0.74, "MENU", () => {
         this.scene.start(SCENES.MENU);
-      })
-    );
+      }),
+    ];
+    c.add([dim, glow, title, ...buttons]);
     this.pauseLayer = c;
+
+    // Quick entrance: scrim + title pop, buttons float up in sequence.
+    dim.setAlpha(0);
+    this.tweens.add({ targets: dim, alpha: 0.86, duration: 160, ease: "Quad.out" });
+    title.setAlpha(0).setScale(0.8);
+    this.tweens.add({ targets: title, alpha: 1, scale: 1, duration: 240, ease: "Back.out" });
+    buttons.forEach((b, i) => {
+      b.setAlpha(0);
+      b.y += 16;
+      this.tweens.add({ targets: b, alpha: 1, y: b.y - 16, delay: 80 + i * 70, duration: 200, ease: "Quad.out" });
+    });
   }
 
   private pauseMenuButton(y: number, label: string, onClick: () => void): Phaser.GameObjects.Text {

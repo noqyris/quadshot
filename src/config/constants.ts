@@ -79,6 +79,7 @@ export const TEX = {
   particle: "px_particle",
   ring: "px_ring",
   glow: "px_glow",
+  bloom: "px_bloom", //      large soft radial bloom (title / ambient orbs)
 } as const;
 
 /** Falling targets. */
@@ -112,7 +113,9 @@ export const LAUNCHER = {
   KEY_SPEED: 520, // px/sec carousel scroll via keyboard
   FIRE_COOLDOWN: 140, // ms between shots
   DRAG_THRESHOLD: 8, // px of movement that turns a tap into a drag
-  /** Vertical centre of the pads — read from the (dynamic) game height. */
+  /** Vertical centre of the pads — read from the (dynamic) game height. The
+   * canvas now fits inside the safe area (see index.html #safe wrapper), so a
+   * plain bottom margin already clears the home indicator. */
   get Y(): number {
     return GAME.HEIGHT - 74;
   },
@@ -132,12 +135,22 @@ export function missLineY(): number {
   return LAUNCHER.Y - LAUNCHER.PAD_D / 2 + 2;
 }
 
-/** Scoring / combo / lives. */
+/** Scoring / combo / lives. Score is simply the number of obstacles destroyed
+ * (1 point each). Combo/multiplier no longer scale the score — they only drive
+ * the juice (bigger bursts on streaks). */
 export const SCORE = {
-  BASE_POINTS: 100,
-  COMBO_PER_STEP: 3, // combo hits needed to raise the multiplier by 1
+  BASE_POINTS: 1, //         one destroyed obstacle = one point
+  COMBO_PER_STEP: 3, //      combo hits needed to raise the (juice-only) multiplier
   MAX_MULTIPLIER: 5,
   START_LIVES: 3,
+} as const;
+
+/** Per-phase "climb": the launcher (and miss line) rise a little each phase, so
+ * obstacles have less distance/time to travel — a difficulty ramp on top of the
+ * speed tiers. */
+export const CLIMB = {
+  PER_PHASE: 16, // logical px the rack climbs at each phase
+  MAX: 130, //     never climb more than this in total
 } as const;
 
 /** Cross-mapping cycle (Phase 4): firing X destroys the next symbol in the ring. */
@@ -180,16 +193,16 @@ export const SPEED_NAMES = ["SLOW", "MEDIUM", "FAST"] as const;
 export const PHASES: PhaseDef[] = [
   // --- Slow tier ---
   { index: 1, scoreThreshold: 0, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 1", subBanner: "MATCH THE SHAPE" },
-  { index: 2, scoreThreshold: 1200, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 2", subBanner: "MATCH THE COLOR" },
-  { index: 3, scoreThreshold: 2600, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 3", subBanner: "CROSS-MATCH" },
+  { index: 2, scoreThreshold: 12, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 2", subBanner: "MATCH THE COLOR" },
+  { index: 3, scoreThreshold: 26, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 3", subBanner: "CROSS-MATCH" },
   // --- Medium tier ---
-  { index: 4, scoreThreshold: 4200, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 4", subBanner: "MATCH THE SHAPE  •  FASTER" },
-  { index: 5, scoreThreshold: 6200, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 5", subBanner: "MATCH THE COLOR  •  FASTER" },
-  { index: 6, scoreThreshold: 8400, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 6", subBanner: "CROSS-MATCH  •  FASTER" },
+  { index: 4, scoreThreshold: 42, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 4", subBanner: "MATCH THE SHAPE  •  FASTER" },
+  { index: 5, scoreThreshold: 62, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 5", subBanner: "MATCH THE COLOR  •  FASTER" },
+  { index: 6, scoreThreshold: 84, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 6", subBanner: "CROSS-MATCH  •  FASTER" },
   // --- Fast tier ---
-  { index: 7, scoreThreshold: 10800, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 7", subBanner: "MATCH THE SHAPE  •  FASTEST" },
-  { index: 8, scoreThreshold: 13600, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 8", subBanner: "MATCH THE COLOR  •  FASTEST" },
-  { index: 9, scoreThreshold: 16800, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 9", subBanner: "CROSS-MATCH  •  FASTEST" },
+  { index: 7, scoreThreshold: 108, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 7", subBanner: "MATCH THE SHAPE  •  FASTEST" },
+  { index: 8, scoreThreshold: 136, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 8", subBanner: "MATCH THE COLOR  •  FASTEST" },
+  { index: 9, scoreThreshold: 168, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 9", subBanner: "CROSS-MATCH  •  FASTEST" },
 ];
 
 /** Storage keys for persisted state. */

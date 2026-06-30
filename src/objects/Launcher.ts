@@ -39,11 +39,16 @@ export class Launcher {
   private readonly pads: Pad[] = [];
 
   // Height-derived geometry (resolved at construction, once GAME.HEIGHT is set).
-  private readonly muzzleY = LAUNCHER.Y - 32;
   private readonly guideBottom = LAUNCHER.Y - LAUNCHER.PAD_D * 0.32;
   private readonly guideHeight = this.guideBottom - 40;
 
   private offset = 0; // carousel scroll, unbounded (wrapped when positioning)
+  private lift = 0; //   per-phase climb: how far the rack has risen (px)
+
+  /** Muzzle Y where shots spawn — rises with the per-phase climb. */
+  private get muzzleY(): number {
+    return LAUNCHER.Y - 32 - this.lift;
+  }
   private enabled = true;
   private lastFireAt = -Infinity;
 
@@ -199,16 +204,29 @@ export class Launcher {
     this.pendingPad = -1;
   }
 
-  /** Pad index under a world point (checks both the primary and the wrap ghost). */
+  /**
+   * Pad index under a world point. The control area is the whole bottom strip —
+   * from a little above the pads down to the screen edge — split into four
+   * columns, so a tap anywhere on a pad (or below it, toward the screen bottom)
+   * fires that pad. This is forgiving for thumbs and robust to the small
+   * touch-position offsets that device safe-area insets can introduce (which
+   * otherwise made only the top of each pad respond). The nearest column wins,
+   * so there are no dead gaps between pads. Wrap ghosts are considered too.
+   */
   private padAt(px: number, py: number): number {
-    if (Math.abs(py - LAUNCHER.Y) > LAUNCHER.HIT_R + 12) return -1;
+    if (py < LAUNCHER.Y - (LAUNCHER.HIT_R + 16)) return -1; // above the control strip
+    let best = -1;
+    let bestDist = Infinity;
     for (const p of this.pads) {
       const x = Phaser.Math.Wrap(p.base + this.offset, 0, W);
       const ghostX = x >= W / 2 ? x - W : x + W;
-      const slop = LAUNCHER.HIT_R + 6;
-      if (Math.abs(px - x) <= slop || Math.abs(px - ghostX) <= slop) return p.index;
+      const d = Math.min(Math.abs(px - x), Math.abs(px - ghostX));
+      if (d < bestDist) {
+        bestDist = d;
+        best = p.index;
+      }
     }
-    return -1;
+    return best;
   }
 
   /** Per-frame keyboard scroll. `dt` is in seconds. */
@@ -234,11 +252,59 @@ export class Launcher {
     // Guard the flash so a visual hiccup can never block the actual shot.
     try {
       this.flashPad(pad, x);
+      this.recoil(pad);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("[Quadshot] flashPad error:", err);
     }
     this.onFire?.({ index: i, shape: pad.shape, color: pad.color, x, y: this.muzzleY });
+  }
+
+  /** A short downward kick on the fired pad — recoil feedback. */
+  private recoil(pad: Pad): void {
+    const parts = [pad.primary.body, pad.primary.rim, pad.primary.icon];
+    const restY = LAUNCHER.Y - this.lift; // rest position accounts for the climb
+    this.scene.tweens.killTweensOf(parts);
+    parts.forEach((s) => (s.y = restY));
+    this.scene.tweens.add({
+      targets: parts,
+      y: restY + 7,
+      duration: 70,
+      yoyo: true,
+      ease: "Quad.out",
+    });
+  }
+
+  /** Raise (or lower) the whole rack by `px` — the per-phase "climb". */
+  setLift(px: number): void {
+    if (px === this.lift) return;
+    this.lift = px;
+    for (const p of this.pads) {
+      for (const s of [p.primary, p.ghost]) {
+        this.scene.tweens.add({
+          targets: [s.body, s.rim, s.icon],
+          y: LAUNCHER.Y - px,
+          duration: 400,
+          ease: "Quad.out",
+        });
+        this.scene.tweens.add({
+          targets: s.guide,
+          y: this.guideBottom - px,
+          duration: 400,
+          ease: "Quad.out",
+        });
+      }
+    }
+  }
+
+  /** Flare every pad rim white briefly — used on phase-up. */
+  flarePads(): void {
+    this.pads.forEach((p) => {
+      [p.primary.rim, p.ghost.rim].forEach((rim) => {
+        rim.setTint(0xffffff);
+        this.scene.time.delayedCall(150, () => rim.setTint(p.color));
+      });
+    });
   }
 
   /** Press feedback: a bright ring that pops outward and fades (no sprite-scale clobber). */

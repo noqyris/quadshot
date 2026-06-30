@@ -22,9 +22,12 @@ export class ScoreManager {
     return Math.min(Math.max(m, 1), SCORE.MAX_MULTIPLIER);
   }
 
-  /** Register a kill. Returns the points awarded (already includes multiplier). */
+  /**
+   * Register a kill. Score is a flat 1 point per destroyed obstacle; the
+   * multiplier is returned only so the caller can scale the visual juice.
+   */
   registerKill(): { points: number; combo: number; multiplier: number } {
-    const points = SCORE.BASE_POINTS * this.multiplier;
+    const points = SCORE.BASE_POINTS; // flat: one obstacle = one point
     this.score += points;
     this.combo += 1;
     return { points, combo: this.combo, multiplier: this.multiplier };

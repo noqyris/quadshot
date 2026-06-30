@@ -46,70 +46,122 @@ export class GameOverScene extends Phaser.Scene {
 
   private build(storedBest: number, storedScores: number[], canContinue: boolean): void {
     const H = GAME.HEIGHT;
-    const { score, kills, bestCombo, phase } = this.run;
+    const { score, bestCombo, phase } = this.run;
     const isNewBest = score > storedBest && score > 0;
+    const reveals: Phaser.GameObjects.Text[] = [];
 
     const title = this.center(H * 0.155, "GAME OVER", 50, UI.TEXT);
-    title.setShadow(0, 0, UI.DANGER, 22, true, true);
+    title.setShadow(0, 0, UI.DANGER, 26, true, true);
     if (title.width > GAME.WIDTH - 56) title.setScale((GAME.WIDTH - 56) / title.width);
+    reveals.push(title);
 
-    this.center(H * 0.235, "SCORE", 14, UI.TEXT_DIM);
-    this.center(H * 0.278, score.toLocaleString(), 46, UI.TEXT).setResolution(3);
-    this.center(
+    reveals.push(this.center(H * 0.235, "SCORE", 14, UI.TEXT_DIM));
+    const scoreText = this.center(H * 0.278, "0", 46, UI.TEXT)
+      .setResolution(3)
+      .setShadow(0, 0, UI.ACCENT, 16, true, true);
+    reveals.push(scoreText);
+    const bestLabel = this.center(
       H * 0.342,
       isNewBest ? "★ NEW BEST ★" : `BEST  ${Math.max(storedBest, score).toLocaleString()}`,
       18,
       isNewBest ? UI.ACCENT : UI.TEXT_DIM
     );
+    reveals.push(bestLabel);
     const stats = this.center(
       H * 0.388,
-      `PHASE ${phase}   •   ${kills} HITS   •   BEST COMBO ×${bestCombo}`,
+      `PHASE ${phase}   •   BEST STREAK ${bestCombo}`,
       13,
       UI.TEXT_DIM
     );
     if (stats.width > GAME.WIDTH - 32) stats.setScale((GAME.WIDTH - 32) / stats.width);
+    reveals.push(stats);
 
     // High-score table (this run merged in for display; persisted on decline).
     // When the continue CTA is shown there's an extra button in the stack, so we
     // show a compact table to avoid colliding with it on short screens (H≈720).
-    this.center(H * 0.44, "HIGH SCORES", 13, UI.TEXT_DIM);
+    reveals.push(this.center(H * 0.44, "HIGH SCORES", 13, UI.TEXT_DIM));
     const rowsToShow = canContinue ? 3 : HIGH_SCORE_COUNT;
     const display = [...storedScores, score].sort((a, b) => b - a).slice(0, rowsToShow);
+    const RANK = [0xfbbf24, 0xcbd5e1, 0xd8843b]; // gold / silver / bronze
     let highlighted = false;
     display.forEach((s, i) => {
       const isThisRun = !highlighted && s === score;
       if (isThisRun) highlighted = true;
-      this.center(
+      const row = this.center(
         H * 0.47 + i * 22,
         `${i + 1}.   ${s.toLocaleString()}`,
         16,
         isThisRun ? UI.ACCENT : UI.TEXT,
         isThisRun ? "bold" : "normal"
       );
+      if (!isThisRun && i < RANK.length) row.setTint(RANK[i]); // medal colours for the podium
+      reveals.push(row);
     });
 
     // Choices — continue (rewarded) is the encouraged CTA when eligible.
     const shareData = { score, best: Math.max(storedBest, score), phase, isNewBest };
     const cx = GAME.WIDTH / 2;
+    const buttons: Phaser.GameObjects.Container[] = [];
+    let menuLink: Phaser.GameObjects.Text;
     if (canContinue) {
-      createButton(this, cx, H * 0.61, "WATCH AD & CONTINUE", () => this.continueRun(), {
-        w: 264,
-        fontSize: 18,
-        filled: true,
-      });
-      createButton(this, cx, H * 0.69, "SHARE  ↗", () => this.share(shareData), { filled: true });
-      createButton(this, cx, H * 0.77, "PLAY AGAIN", () => this.playAgain(), { filled: false });
-      createLinkButton(this, cx, H * 0.85, "MENU", () => this.toMenu(), 18);
+      buttons.push(
+        createButton(this, cx, H * 0.61, "WATCH AD & CONTINUE", () => this.continueRun(), {
+          w: 264,
+          fontSize: 18,
+          filled: true,
+        }).container,
+        createButton(this, cx, H * 0.69, "SHARE  ↗", () => this.share(shareData), { filled: true }).container,
+        createButton(this, cx, H * 0.77, "PLAY AGAIN", () => this.playAgain(), { filled: false }).container
+      );
+      menuLink = createLinkButton(this, cx, H * 0.85, "MENU", () => this.toMenu(), 18);
     } else {
-      createButton(this, cx, H * 0.655, "SHARE  ↗", () => this.share(shareData), { filled: true });
-      createButton(this, cx, H * 0.735, "PLAY AGAIN", () => this.playAgain(), { filled: false });
-      createLinkButton(this, cx, H * 0.815, "MENU", () => this.toMenu(), 18);
+      buttons.push(
+        createButton(this, cx, H * 0.655, "SHARE  ↗", () => this.share(shareData), { filled: true }).container,
+        createButton(this, cx, H * 0.735, "PLAY AGAIN", () => this.playAgain(), { filled: false }).container
+      );
+      menuLink = createLinkButton(this, cx, H * 0.815, "MENU", () => this.toMenu(), 18);
     }
 
     showBanner(this); // bottom ad banner (placeholder) when ads are active
 
     this.input.keyboard?.once("keydown-ENTER", () => this.playAgain());
     this.input.keyboard?.once("keydown-SPACE", () => this.playAgain());
+
+    // --- Entrance: cascade the text in, count the score up, then float the choices in.
+    reveals.forEach((t, i) => {
+      const y = t.y;
+      const alpha = t.alpha; // table rows / labels keep their intended alpha
+      t.setAlpha(0);
+      t.y = y + 12;
+      this.tweens.add({ targets: t, y, alpha, delay: 80 + i * 70, duration: 320, ease: "Quad.out" });
+    });
+    const choices: Array<Phaser.GameObjects.Container | Phaser.GameObjects.Text> = [...buttons, menuLink];
+    choices.forEach((c, i) => {
+      c.setAlpha(0);
+      this.tweens.add({ targets: c, alpha: 1, delay: 80 + (reveals.length + i) * 70, duration: 300, ease: "Quad.out" });
+    });
+
+    // Animated score count-up after its label settles.
+    if (score > 0) {
+      this.tweens.addCounter({
+        from: 0,
+        to: score,
+        delay: 260,
+        duration: 900,
+        ease: "Quad.out",
+        onUpdate: (tw) => scoreText.setText(Math.round(tw.getValue() ?? score).toLocaleString()),
+        onComplete: () => {
+          scoreText.setText(score.toLocaleString());
+          this.tweens.add({ targets: scoreText, scale: { from: 1.12, to: 1 }, duration: 220, ease: "Back.out" });
+          if (isNewBest) {
+            Sfx.match(6);
+            this.tweens.add({ targets: bestLabel, scale: { from: 1, to: 1.16 }, duration: 220, yoyo: true, ease: "Sine.inOut" });
+          }
+        },
+      });
+    } else {
+      scoreText.setText("0");
+    }
   }
 
   // --- Flow -------------------------------------------------------------------

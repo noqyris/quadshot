@@ -29,49 +29,74 @@ if (DEV.ENABLED) {
   );
 }
 
-// Match the logical HEIGHT to the device's available (safe-area-padded) aspect
-// so the portrait field fills the screen with no letterbox. WIDTH stays 480.
-(() => {
-  const el = document.getElementById("game");
-  const w = (el?.clientWidth || window.innerWidth) ?? GAME.WIDTH;
-  const h = (el?.clientHeight || window.innerHeight) ?? GAME.HEIGHT;
-  const aspect = h > 0 && w > 0 ? h / w : 800 / 480;
-  GAME.HEIGHT = Math.round(
-    Phaser.Math.Clamp(GAME.WIDTH * aspect, LAYOUT.MIN_HEIGHT, LAYOUT.MAX_HEIGHT)
-  );
-})();
-
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: "game",
-  backgroundColor: GAME.BG_HEX,
-  width: GAME.WIDTH,
-  height: GAME.HEIGHT,
-  // Portrait field sized to the device aspect, so FIT fills the screen.
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+/**
+ * Boot the game once the layout has SETTLED. iOS WebViews apply the safe-area
+ * insets (env()) a beat after first layout, so the #game content box keeps
+ * shrinking for a few frames. If we read its size too early, GAME.HEIGHT is
+ * wrong and the FIT canvas overflows above/below the safe area (the HUD ends up
+ * under the status bar / the pads under the home indicator). So we wait until
+ * #game's height is stable before sizing the logical field.
+ */
+function createGame(): void {
+  const config: Phaser.Types.Core.GameConfig = {
+    type: Phaser.AUTO,
+    parent: "game",
+    backgroundColor: GAME.BG_HEX,
     width: GAME.WIDTH,
     height: GAME.HEIGHT,
-  },
-  render: {
-    antialias: true,
-    roundPixels: false,
-    powerPreference: "high-performance",
-  },
-  // Targets/projectiles use manual movement + circle-overlap checks, so no
-  // physics engine is needed (keeps "pass-through" trivial and deterministic).
-  scene: [BootScene, MenuScene, GameScene, GameOverScene],
-};
+    // Portrait field sized to the device aspect, so FIT fills the safe area.
+    scale: {
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+      width: GAME.WIDTH,
+      height: GAME.HEIGHT,
+    },
+    render: {
+      antialias: true,
+      roundPixels: false,
+      powerPreference: "high-performance",
+    },
+    // Targets/projectiles use manual movement + circle-overlap checks, so no
+    // physics engine is needed (keeps "pass-through" trivial and deterministic).
+    scene: [BootScene, MenuScene, GameScene, GameOverScene],
+  };
 
-const game = new Phaser.Game(config);
+  const game = new Phaser.Game(config);
+  // Expose the game instance for debugging / automated smoke tests.
+  window.game = game;
 
-// Expose the game instance for debugging / automated smoke tests.
-window.game = game;
-
-if (DEV.ENABLED) {
-  void import("./ui/ShareCard").then(({ buildShareCard }) => {
-    window.__shareCard = (d) =>
-      buildShareCard(d as Parameters<typeof buildShareCard>[0]).toDataURL("image/png");
-  });
+  if (DEV.ENABLED) {
+    void import("./ui/ShareCard").then(({ buildShareCard }) => {
+      window.__shareCard = (d) =>
+        buildShareCard(d as Parameters<typeof buildShareCard>[0]).toDataURL("image/png");
+    });
+  }
 }
+
+(() => {
+  const el = document.getElementById("game");
+  let lastH = -1;
+  let stable = 0;
+  let frames = 0;
+  const tick = () => {
+    const w = (el?.clientWidth || window.innerWidth) || GAME.WIDTH;
+    const h = (el?.clientHeight || window.innerHeight) || GAME.HEIGHT;
+    if (h === lastH) stable++;
+    else {
+      stable = 0;
+      lastH = h;
+    }
+    frames++;
+    // Boot once the height holds steady (insets applied) or after a safety cap.
+    if (stable >= 3 || frames > 90) {
+      const aspect = h > 0 && w > 0 ? h / w : 800 / 480;
+      GAME.HEIGHT = Math.round(
+        Phaser.Math.Clamp(GAME.WIDTH * aspect, LAYOUT.MIN_HEIGHT, LAYOUT.MAX_HEIGHT)
+      );
+      createGame();
+      return;
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();

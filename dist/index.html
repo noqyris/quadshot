@@ -30,24 +30,34 @@
         -webkit-tap-highlight-color: transparent;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
-      /* Center the canvas and respect device safe areas (notches, home bar). */
-      #game {
+      /* The safe-area wrapper holds the inset padding; the Phaser parent (#game)
+         is the inner content box, so Phaser FITs the canvas INSIDE the safe area
+         instead of overflowing under the notch / home indicator (which made the
+         bottom of the pads untappable). */
+      #safe {
         position: fixed;
         inset: 0;
+        box-sizing: border-box;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+      #game {
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right)
-          env(safe-area-inset-bottom) env(safe-area-inset-left);
       }
       #game canvas {
         display: block;
         touch-action: none;
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-DcZSND1a.js"></script>
+    <script type="module" crossorigin src="./assets/index-DQ7P39n-.js"></script>
   </head>
   <body>
-    <div id="game"></div>
+    <div id="safe">
+      <div id="game"></div>
+    </div>
   </body>
 </html>

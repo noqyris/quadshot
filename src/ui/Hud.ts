@@ -30,8 +30,13 @@ export class Hud {
   private bestText!: Phaser.GameObjects.Text;
   private comboBadge!: Phaser.GameObjects.Text;
   private lifePips: Phaser.GameObjects.Arc[] = [];
+  private pipGlows: Phaser.GameObjects.Image[] = [];
   private legend!: Phaser.GameObjects.Container;
   private ruleCard?: Phaser.GameObjects.Container;
+
+  private lastScore = 0;
+  private lastLives: number = SCORE.START_LIVES;
+  private comboShown = false;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -62,36 +67,65 @@ export class Hud {
   }
 
   private build(): void {
-    const top = 14;
+    const top = 16;
 
-    // Left column: score + best (frees the top-right corner for the pause button).
+    // Left column: score + best. Kept off-centre (clear of the notch / Dynamic
+    // Island) and given room so the score reads big and clear.
     this.text(16, top, "SCORE", 12, UI.TEXT_DIM);
-    this.scoreText = this.text(16, top + 14, "0", 28);
-    this.bestText = this.text(16, top + 46, "BEST  0", 13, UI.TEXT_DIM);
+    this.scoreText = this.text(16, top + 16, "0", 36).setShadow(0, 0, UI.ACCENT, 18, true, true);
+    this.bestText = this.text(16, top + 62, "BEST  0", 13, UI.TEXT_DIM);
 
-    // Lives pips, top-right (the very corner is left for the pause button).
+    // Lives pips, top-right (off-centre too; the very corner is the pause button).
     const pipR = 6;
     const gap = 18;
+    const pipY = top + 30;
     const startX = GAME.WIDTH - 16 - (SCORE.START_LIVES - 1) * gap;
     for (let i = 0; i < SCORE.START_LIVES; i++) {
+      const px = startX + i * gap;
+      const glow = this.scene.add
+        .image(px, pipY, TEX.glow)
+        .setDisplaySize(26, 26)
+        .setTint(0xfb7185)
+        .setAlpha(0.45)
+        .setBlendMode(Phaser.BlendModes.ADD);
       const pip = this.scene.add
-        .circle(startX + i * gap, top + 40, pipR, 0xfb7185)
+        .circle(px, pipY, pipR, 0xfb7185)
         .setStrokeStyle(2, 0xffffff, 0.25);
+      this.pipGlows.push(glow);
       this.lifePips.push(pip);
+      this.root.add(glow);
       this.root.add(pip);
     }
 
-    // Combo badge (hidden until multiplier > 1).
-    this.comboBadge = this.text(GAME.WIDTH / 2, top + 4, "", 20, UI.ACCENT, "center");
+    // Centre column lives BELOW the Dynamic Island zone (the island sits dead
+    // centre at the very top), so the combo badge + rule legend are pushed down.
+    this.comboBadge = this.text(GAME.WIDTH / 2, top + 48, "", 20, UI.ACCENT, "center");
     this.comboBadge.setVisible(false);
 
     // Rule legend strip.
-    this.legend = this.scene.add.container(GAME.WIDTH / 2, top + 64);
+    this.legend = this.scene.add.container(GAME.WIDTH / 2, top + 84);
     this.root.add(this.legend);
+  }
+
+  /** Set the score with no animation — for the initial / resumed value. */
+  initScore(score: number): void {
+    this.scoreText.setText(score.toLocaleString());
+    this.lastScore = score;
   }
 
   setScore(score: number): void {
     this.scoreText.setText(score.toLocaleString());
+    // A small tactile twitch on each gain (skip the initial 0 / no-op sets).
+    if (score > this.lastScore) {
+      this.scene.tweens.killTweensOf(this.scoreText);
+      this.scene.tweens.add({
+        targets: this.scoreText,
+        scale: { from: 1.12, to: 1 },
+        duration: 200,
+        ease: "Back.out",
+      });
+    }
+    this.lastScore = score;
   }
 
   setBest(best: number): void {
@@ -100,17 +134,63 @@ export class Hud {
 
   setLives(lives: number): void {
     this.lifePips.forEach((pip, i) => {
-      const alive = i < lives;
-      pip.setFillStyle(alive ? 0xfb7185 : 0x33405e);
-      pip.setScale(alive ? 1 : 0.8);
+      const glow = this.pipGlows[i];
+      const wasAlive = i < this.lastLives;
+      const nowAlive = i < lives;
+      if (wasAlive && !nowAlive) this.killPip(pip, glow);
+      else if (!wasAlive && nowAlive) this.revivePip(pip, glow);
+      else {
+        pip.setFillStyle(nowAlive ? 0xfb7185 : 0x33405e).setScale(nowAlive ? 1 : 0.8);
+        glow.setAlpha(nowAlive ? 0.45 : 0);
+      }
     });
+    this.lastLives = lives;
+  }
+
+  private killPip(pip: Phaser.GameObjects.Arc, glow: Phaser.GameObjects.Image): void {
+    const tw = this.scene.tweens;
+    tw.killTweensOf(pip);
+    pip.setStrokeStyle(3, 0xff8a9a, 1); // bright damage rim flash
+    // Pop up, then collapse into the dim "spent" state.
+    tw.add({
+      targets: pip,
+      scale: 1.35,
+      duration: 90,
+      ease: "Back.out",
+      onComplete: () => {
+        pip.setFillStyle(0x33405e).setStrokeStyle(2, 0xffffff, 0.25);
+        tw.add({ targets: pip, scale: 0.8, duration: 200, ease: "Quad.in" });
+      },
+    });
+    tw.killTweensOf(glow);
+    tw.add({ targets: glow, alpha: 0, scale: glow.scaleX * 1.4, duration: 240, ease: "Quad.out" });
+  }
+
+  private revivePip(pip: Phaser.GameObjects.Arc, glow: Phaser.GameObjects.Image): void {
+    const tw = this.scene.tweens;
+    tw.killTweensOf(pip);
+    tw.killTweensOf(glow);
+    pip.setFillStyle(0xfb7185).setStrokeStyle(2, 0xffffff, 0.25);
+    glow.setAlpha(0.45);
+    tw.add({ targets: pip, scale: { from: 0.5, to: 1 }, duration: 300, ease: "Back.out" });
   }
 
   setCombo(combo: number, multiplier: number): void {
     if (multiplier > 1) {
-      this.comboBadge.setText(`x${multiplier}  •  ${combo} COMBO`).setVisible(true);
+      this.comboBadge.setText(`${combo}  STREAK`).setVisible(true);
+      if (!this.comboShown) {
+        this.comboShown = true;
+        this.comboBadge.setShadow(0, 0, UI.ACCENT, 12, true, true);
+        this.scene.tweens.add({
+          targets: this.comboBadge,
+          scale: { from: 1.3, to: 1 },
+          duration: 200,
+          ease: "Back.out",
+        });
+      }
     } else {
       this.comboBadge.setVisible(false);
+      this.comboShown = false;
     }
   }
 
@@ -236,11 +316,17 @@ export class Hud {
 
     c.add([meta, title, instr, demo]);
 
-    // Animate in (title pops), hold, fade out.
+    // Animate in — the card fades up, the title pops from small with a slight
+    // rise, and the instruction + demo trail in just behind it.
+    const tw = this.scene.tweens;
     c.setAlpha(0);
-    title.setScale(0.82);
-    this.scene.tweens.add({ targets: c, alpha: 1, duration: 220, ease: "Quad.out" });
-    this.scene.tweens.add({ targets: title, scale: 1, duration: 300, ease: "Back.out" });
+    title.setScale(0.55);
+    title.y -= 14;
+    instr.setAlpha(0);
+    demo.setAlpha(0);
+    tw.add({ targets: c, alpha: 1, duration: 200, ease: "Quad.out" });
+    tw.add({ targets: title, scale: 1, y: cy - 42, duration: 420, ease: "Back.out" });
+    tw.add({ targets: [instr, demo], alpha: 1, delay: 200, duration: 260, ease: "Quad.out" });
     this.scene.tweens.add({
       targets: c,
       alpha: 0,

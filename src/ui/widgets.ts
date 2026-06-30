@@ -11,6 +11,9 @@ import { TEX, UI } from "../config/constants";
 /** UI.ACCENT as a Phaser numeric colour (computed once, not per button). */
 export const ACCENT_NUM = Phaser.Display.Color.HexStringToColor(UI.ACCENT).color;
 
+/** Render text at device-pixel-ratio (clamped 2–3) so labels stay crisp. */
+const TEXT_RES = Math.max(2, Math.min(3, (typeof window !== "undefined" && window.devicePixelRatio) || 2));
+
 /** A standard bold UI label. Defaults match the old per-file helpers exactly. */
 export function createText(
   scene: Phaser.Scene,
@@ -31,7 +34,7 @@ export function createText(
       fontStyle: weight,
     })
     .setOrigin(originX, originY)
-    .setResolution(2);
+    .setResolution(TEXT_RES);
 }
 
 /**
@@ -93,11 +96,25 @@ export function createButton(
 
   let txt: Phaser.GameObjects.Text;
   if (filled) {
+    // Soft accent glow under the body so the primary CTA reads as lit. It lives
+    // in the container, so it breathes with the button.
+    const halo = scene.add
+      .image(0, 0, TEX.glow)
+      .setDisplaySize(w * 1.5, h * 2.2)
+      .setTint(ACCENT_NUM)
+      .setAlpha(0.4)
+      .setBlendMode(Phaser.BlendModes.ADD);
     const bg = scene.add.image(0, 0, TEX.pad).setDisplaySize(w, h).setTint(ACCENT_NUM);
     txt = createText(scene, 0, 0, label, fontSize, "#07221f").setResolution(3);
-    c.add([bg, txt]);
-    c.on("pointerover", () => bg.setTint(0xffffff));
-    c.on("pointerout", () => bg.setTint(ACCENT_NUM));
+    c.add([halo, bg, txt]);
+    c.on("pointerover", () => {
+      bg.setTint(0xffffff);
+      halo.setAlpha(0.6);
+    });
+    c.on("pointerout", () => {
+      bg.setTint(ACCENT_NUM);
+      halo.setAlpha(0.4);
+    });
     scene.tweens.add({
       targets: c,
       scale: { from: 1, to: 1.04 },
@@ -110,6 +127,15 @@ export function createButton(
     const bg = scene.add.rectangle(0, 0, w, h, 0x16233d, 1).setStrokeStyle(2, ACCENT_NUM, 1);
     txt = createText(scene, 0, 0, label, fontSize, UI.ACCENT);
     c.add([bg, txt]);
+    // Outline buttons have no breathing tween, so a springy hover + press is safe.
+    c.on("pointerover", () => {
+      scene.tweens.add({ targets: c, scale: 1.06, duration: 130, ease: "Back.out" });
+      bg.setStrokeStyle(2, 0xffffff, 1);
+    });
+    c.on("pointerout", () => {
+      scene.tweens.add({ targets: c, scale: 1, duration: 200, ease: "Elastic.out" });
+      bg.setStrokeStyle(2, ACCENT_NUM, 1);
+    });
   }
 
   c.setInteractive({
