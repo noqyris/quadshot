@@ -1,0 +1,9 @@
+
+# App Store secrets
+.env.appstore
+fastlane/AuthKey_*.p8
+fastlane/report.xml
+build/
+
+# Playwright MCP scratch (browser captures, resized screenshots)
+.playwright-mcp/
