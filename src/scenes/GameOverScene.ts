@@ -216,9 +216,19 @@ export class GameOverScene extends Phaser.Scene {
     this.finalizeAndGo(SCENES.MENU);
   }
 
-  /** Record the run, then navigate — and still navigate even if recording fails. */
+  /**
+   * Record the run, maybe show an interstitial, then navigate — and still
+   * navigate even if recording or the ad fails.
+   *
+   * `maybeInterstitial()` resolves only once the ad is DISMISSED, so the scene
+   * transition never starts behind a full-screen ad. `busy` blocks re-taps for
+   * the whole window (a cold interstitial load can take seconds).
+   */
   private finalizeAndGo(scene: string): void {
+    this.busy = true;
     this.finalize()
+      .catch(() => {})
+      .then(() => Monetization.maybeInterstitial())
       .catch(() => {})
       .then(() => this.go(scene));
   }

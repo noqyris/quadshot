@@ -214,19 +214,36 @@ export const STORE_KEYS = {
   SCORES: "quadshot.scores",
   TUTORIAL: "quadshot.tutorialSeen",
   ADS_REMOVED: "quadshot.adsRemoved",
+  RUNS_SINCE_AD: "quadshot.runsSinceAd",
 } as const;
 
 /**
- * Monetization tunables. `ENABLED` gates all ad UI (banner placeholder +
- * remove-ads). The actual ad network / IAP wiring lives in Monetization.ts,
- * behind safe fallbacks — see docs for the native AdMob + store IAP setup.
+ * Monetization tunables. `ENABLED` gates every ad + IAP surface; the native
+ * AdMob / StoreKit wiring lives in Monetization.ts behind web-safe fallbacks.
+ *
+ * There is deliberately NO price literal here. StoreKit returns a localized,
+ * currency-correct string; rendering a hardcoded "$0.99" to a German or Japanese
+ * player contradicts the payment sheet (and is a misleading-pricing rejection).
+ * Use `Monetization.removeAdsLabel()`.
  */
 export const MONETIZATION = {
-  // v1 ships with NO ads/IAP (clean launch, matches the "100% offline" listing).
-  // Flip to true once AdMob + StoreKit/Play Billing are wired (see STORE_LISTING).
-  ENABLED: false,
-  REMOVE_ADS_PRICE: "$0.99",
+  // Live: AdMob app ca-app-pub-3307486877162157~4900552009, real ad units in adUnits.ts.
+  ENABLED: true,
+  /**
+   * No banner ships. A native AdMob banner is pinned to the bottom of the
+   * window, outside the Phaser canvas — exactly where the launcher pads live
+   * (LAUNCHER.Y = H-74, hit radius 44 ⇒ the pads own [H-118, H-30]). Rather
+   * than guard that race, the whole surface is designed out. Banner.ts stays as
+   * a dev-only placeholder behind this flag.
+   */
+  SHOW_BANNER: false,
   MAX_CONTINUES: 1, // ad-revives allowed per run
+  /** Show a full-screen interstitial on every Nth run that ends for good. */
+  INTERSTITIAL_EVERY_N_RUNS: 3,
+  /** Never show two interstitials closer together than this. */
+  INTERSTITIAL_MIN_GAP_MS: 90_000,
+  /** Non-consumable product id, namespaced under the bundle id. */
+  REMOVE_ADS_PRODUCT_ID: "com.bysubotic.quadshot.removeads",
 } as const;
 
 /** Viral share loop. Replace URL with the real App Store / landing link. */

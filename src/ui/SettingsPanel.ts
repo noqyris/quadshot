@@ -29,6 +29,7 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
   c.add(toggleRow(scene, cx, cy - 128, "SOUND", !Sfx.isMuted(), (on) => {
     Sfx.unlock();
     Sfx.setMuted(!on);
+    Monetization.setMuted(!on); // video ads respect the app's mute switch
     void Storage.setMuted(!on);
   }));
   c.add(toggleRow(scene, cx, cy - 78, "HAPTICS", Haptics.isEnabled(), (on) => {
@@ -37,30 +38,38 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
     if (on) Haptics.fire();
   }));
 
-  // Monetization: remove-ads purchase + restore (hidden if ads are disabled).
+  // Remove-ads purchase + restore. Opening Settings is the FIRST moment StoreKit
+  // is allowed to speak — never at launch, where an entitlement lookup can make
+  // iOS present a "Sign in to Apple Account" sheet over the game.
   if (MONETIZATION.ENABLED) {
     if (Monetization.isRemoved()) {
       c.add(createText(scene, cx, cy - 16, "✓ ADS REMOVED — THANK YOU", 15, UI.ACCENT, 0.5));
     } else {
+      // The label carries the LOCALIZED store price, never a hardcoded "$0.99" —
+      // a USD literal that disagrees with the payment sheet is a rejection vector.
+      // It starts priceless and fills in when the store answers.
       const buy = createText(
         scene,
         cx,
         cy - 22,
-        `REMOVE ADS — ${MONETIZATION.REMOVE_ADS_PRICE}`,
+        Monetization.removeAdsLabel(),
         16,
         UI.ACCENT,
         0.5
       ).setInteractive({ useHandCursor: true });
+      void Monetization.whenPriceReady().then(() => {
+        if (buy.scene) buy.setText(Monetization.removeAdsLabel()); // panel may be closed
+      });
       buy.on("pointerup", () => {
         buy.setText("…");
         void Monetization.purchaseRemoveAds().then((ok) =>
-          buy.setText(ok ? "✓ ADS REMOVED — THANK YOU" : `REMOVE ADS — ${MONETIZATION.REMOVE_ADS_PRICE}`)
+          buy.setText(ok ? "✓ ADS REMOVED — THANK YOU" : Monetization.removeAdsLabel())
         );
       });
       c.add(buy);
-      const restore = createText(scene, cx, cy + 8, "Restore purchases", 12, UI.TEXT_DIM, 0.5).setInteractive({
-        useHandCursor: true,
-      });
+
+      const restore = createText(scene, cx, cy + 8, "Restore purchases", 12, UI.TEXT_DIM, 0.5)
+        .setInteractive({ useHandCursor: true });
       restore.on("pointerup", () => {
         restore.setText("…");
         void Monetization.restore().then((owned) => {

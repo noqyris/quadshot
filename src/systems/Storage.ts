@@ -176,6 +176,16 @@ class StorageService {
   async setAdsRemoved(removed: boolean): Promise<void> {
     await this.setRaw(STORE_KEYS.ADS_REMOVED, removed ? "1" : "0");
   }
+
+  /** Runs completed since the last interstitial. Not cleared by resetProgress. */
+  async getRunsSinceAd(): Promise<number> {
+    const n = Number.parseInt((await this.getRaw(STORE_KEYS.RUNS_SINCE_AD)) ?? "", 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+
+  async setRunsSinceAd(n: number): Promise<void> {
+    await this.setRaw(STORE_KEYS.RUNS_SINCE_AD, String(Math.max(0, n)));
+  }
 }
 
 export const Storage = new StorageService();

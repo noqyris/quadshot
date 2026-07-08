@@ -1,6 +1,6 @@
 require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
 
-platform :ios, '13.0'
+platform :ios, '15.0'
 use_frameworks!
 
 # workaround to avoid Xcode caching of Pods that requires
@@ -11,16 +11,22 @@ install! 'cocoapods', :disable_input_output_paths => true
 def capacitor_pods
   pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCommunityAdmob', :path => '../../node_modules/@capacitor-community/admob'
   pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
   pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
   pod 'CapacitorHaptics', :path => '../../node_modules/@capacitor/haptics'
   pod 'CapacitorPreferences', :path => '../../node_modules/@capacitor/preferences'
   pod 'CapacitorShare', :path => '../../node_modules/@capacitor/share'
+  pod 'CapacitorPluginCdvPurchase', :path => '../../node_modules/capacitor-plugin-cdv-purchase'
 end
 
 target 'App' do
   capacitor_pods
-  # Add your Pods here
+  # Pin UMP to the last 2.x. @capacitor-community/admob 6.2.0 declares
+  # `GoogleUserMessagingPlatform (>= 1.1)` — an open upper bound — so CocoaPods
+  # resolves 3.x, which NS_SWIFT_NAME-renamed UMPConsentStatus -> ConsentStatus
+  # and breaks the plugin's ConsentExecutor.swift at compile time.
+  pod 'GoogleUserMessagingPlatform', '2.7.0'
 end
 
 post_install do |installer|

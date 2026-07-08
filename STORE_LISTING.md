@@ -15,7 +15,7 @@ Draft copy for the App Store and Google Play listings. Tune wording per store.
 ## Promo text (iOS, ≤170 chars)
 
 Slide, aim, fire. Chain combos for huge multipliers, smash your high score, then
-dare your friends: can you beat me? Endless neon. 100% offline.
+dare your friends: can you beat me? Endless neon reflex arcade.
 
 ## Description
 
@@ -36,7 +36,8 @@ Features:
 • Endless run with combo multipliers and streak rewards
 • Local high scores and lifetime stats
 • Haptic feedback and punchy neon juice
-• 100% offline — no ads, no accounts, no tracking
+• No accounts, no sign-up — open it and play
+• Watch an ad to continue a run, or remove ads with a one-time purchase
 
 Keywords (iOS, comma-separated, ≤100 chars):
 `reflex,arcade,combo,endless,neon,fast,twitch,one more run,high score,tap,streak,challenge,score`
@@ -98,15 +99,15 @@ is built for this: `Sym`, `COLORS`, and the shape textures in
 `src/config/constants.ts` + `src/scenes/BootScene.ts` are the only places to
 change, and the match engine is colour/shape-agnostic.
 
-## Monetization (DISABLED for v1)
+## Monetization (LIVE from v1.1.0)
 
-**v1 ships with no ads and no IAP** — `MONETIZATION.ENABLED=false` (constants.ts),
-the Android `INTERNET` permission is removed, and the listing/privacy "100% offline,
-no ads" copy is now accurate. To add ads in a later version, flip the flag back on
+**v1.1.0 ships AdMob (rewarded + interstitial) and a Remove-Ads IAP** — `MONETIZATION.ENABLED=true`,
+AdMob (rewarded + interstitial) is wired, and the listing/privacy copy discloses
+ads, ATT and the Remove-Ads purchase. To turn ads off again, flip the flag back off
 and wire the native SDKs as below (then re-add `INTERNET` and update the privacy copy).
 
 The game-side flows are built and working behind safe fallbacks in
-`src/systems/Monetization.ts` (rewarded "continue", a bottom banner placeholder,
+`src/systems/Monetization.ts` (rewarded "continue", a capped interstitial; no banner ships,
 and a "Remove Ads — $0.99" entitlement persisted locally). To make them real:
 
 **Ads — AdMob** (`@capacitor-community/admob`):

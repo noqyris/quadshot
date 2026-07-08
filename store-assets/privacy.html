@@ -6,56 +6,110 @@
 <title>Quadshot — Privacy Policy</title>
 <style>
   :root { color-scheme: dark; }
-  body { margin: 0; background: #070b1a; color: #e6edf6;
-    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 22px 80px; }
-  h1 { font-size: 30px; margin: 0 0 4px; }
-  h2 { font-size: 19px; margin: 32px 0 8px; color: #5eead4; }
-  .upd { color: #8b98b3; font-size: 14px; margin-bottom: 24px; }
-  a { color: #5eead4; }
-  ul { padding-left: 20px; }
-  li { margin: 4px 0; }
-  code { color: #5eead4; }
+  body { margin:0; background:#070b1a; color:#e6edf6;
+    font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 22px 90px; }
+  h1 { font-size:30px; margin:0 0 4px; }
+  h2 { font-size:19px; margin:36px 0 8px; color:#5eead4; }
+  .upd { color:#8b98b3; font-size:14px; margin-bottom:26px; }
+  a { color:#5eead4; }
+  ul { padding-left:20px; } li { margin:6px 0; }
+  code { color:#5eead4; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:15px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid #1c2750; vertical-align:top; }
+  th { color:#8b98b3; font-weight:600; }
+  .note { background:#0e1530; border:1px solid #1c2750; border-radius:12px; padding:14px 18px; margin:18px 0; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Privacy Policy — Quadshot</h1>
-  <div class="upd">Last updated: 14 June 2026</div>
+  <div class="upd">Last updated: 8 July 2026 · applies to Quadshot v1.1.0 and later</div>
 
-  <p>Quadshot (“the app”) is a single-player arcade game published by bySubotic.
-  Your privacy matters, and the app is designed to need none of your data.</p>
+  <p>Quadshot (“the app”) is a single-player arcade game published by bySubotic
+  (Djordje Subotic). This policy explains exactly what data leaves your device,
+  who receives it, and how to stop it.</p>
 
-  <h2>What we collect</h2>
-  <p><strong>Nothing.</strong> Quadshot does not collect, transmit, or share any
-  personal information. It has no user accounts, no analytics, no advertising
-  SDKs, and makes no network requests.</p>
+  <div class="note">
+    <strong>Versions 1.0 and earlier were fully offline and collected nothing.</strong>
+    From v1.1.0 the app shows ads, which means a third party — Google — receives
+    data from your device. Everything below describes that.
+  </div>
 
-  <h2>Data stored on your device</h2>
-  <p>The app stores a small amount of data <strong>locally on your device only</strong>
-  (via the operating system’s preferences / local storage). It never leaves the device:</p>
+  <h2>What we collect ourselves</h2>
+  <p><strong>Nothing.</strong> bySubotic operates no servers, no accounts, and no
+  analytics. We never receive your data.</p>
+
+  <h2>What our advertising partner collects</h2>
+  <p>Quadshot shows ads using the <strong>Google Mobile Ads SDK (AdMob)</strong>.
+  Google collects the following from your device, as declared in Google's own
+  privacy manifest shipped inside the SDK:</p>
+
+  <table>
+    <tr><th>Data</th><th>Linked to you</th><th>Used to track you</th><th>Why</th></tr>
+    <tr><td>Device identifier (IDFA / advertising ID)</td><td>Yes</td><td><strong>Yes, only if you allow it</strong></td><td>Ad personalisation, measurement</td></tr>
+    <tr><td>Advertising data (ads shown, taps)</td><td>Yes</td><td>No</td><td>Ad delivery, measurement</td></tr>
+    <tr><td>Product interaction (app opens, ad interactions)</td><td>Yes</td><td>No</td><td>Ad delivery, analytics</td></tr>
+    <tr><td>Coarse location (approximate, derived from IP)</td><td>Yes</td><td>No</td><td>Region-appropriate ads</td></tr>
+    <tr><td>Performance &amp; other diagnostic data</td><td>No</td><td>No</td><td>SDK reliability</td></tr>
+    <tr><td>Crash data</td><td>No</td><td>No</td><td>Analytics</td></tr>
+  </table>
+
+  <p>Quadshot does <strong>not</strong> use precise location, contacts, photos,
+  the microphone, the camera, or your health data. It has no user accounts and no
+  user-generated content.</p>
+
+  <h2>Tracking, and how to refuse it</h2>
+  <p>On first launch iOS asks: <em>“Allow Quadshot to track your activity across
+  other companies’ apps and websites?”</em></p>
+  <ul>
+    <li><strong>If you choose “Ask App Not to Track”</strong> (or never answer),
+        your device identifier is not used for tracking and Google serves
+        <strong>non-personalised ads</strong>. The game works exactly the same.</li>
+    <li><strong>If you choose “Allow”</strong>, Google may use your advertising
+        identifier to personalise ads and measure them.</li>
+  </ul>
+  <p>You can change your mind at any time: <em>iOS Settings → Privacy &amp;
+  Security → Tracking</em>.</p>
+
+  <h2>If you are in the EEA, UK or Switzerland</h2>
+  <p>Before any ad is requested, Quadshot shows Google's consent form (Google
+  User Messaging Platform). If consent is required and you do not grant it, the
+  app requests no ads at all for that session. You can reopen the form from the
+  in-game Settings.</p>
+
+  <h2>Purchases</h2>
+  <p>“Remove Ads” is a one-time purchase processed entirely by <strong>Apple</strong>.
+  We never see your name, payment details, or Apple Account. Once purchased, the app
+  stores a single flag on your device (<code>adsRemoved</code>) and stops requesting
+  ads. Use <em>Restore purchases</em> in Settings to recover it on a new device.</p>
+
+  <h2>Data stored on your device only</h2>
   <ul>
     <li>Your best score and local high-score table</li>
-    <li>Game statistics (games played, total hits, best combo, highest phase reached)</li>
-    <li>Settings (sound on/off, haptics on/off)</li>
-    <li>A flag recording that you have seen the tutorial</li>
+    <li>Game statistics (games played, best combo, highest phase)</li>
+    <li>Settings (sound, haptics) and the “ads removed” flag</li>
   </ul>
-  <p>You can erase all of this at any time via <strong>Settings → Reset Progress</strong>,
-  or by uninstalling the app.</p>
-
-  <h2>Permissions</h2>
-  <p>Quadshot requests no special permissions. It uses the device’s vibration
-  motor for haptic feedback, which you can disable in Settings.</p>
+  <p>This never leaves your device and is deleted when you delete the app.</p>
 
   <h2>Children</h2>
-  <p>The app is suitable for all ages and does not collect data from anyone,
-  including children.</p>
+  <p>Quadshot is rated 4+ but is not directed to children and is not in the Kids
+  Category. We do not knowingly collect data from children under 13.</p>
+
+  <h2>Your rights</h2>
+  <p>Because we hold no data about you, there is nothing for us to export or
+  delete. For data Google holds, see
+  <a href="https://policies.google.com/technologies/partner-sites">How Google uses
+  information from sites or apps that use our services</a> and
+  <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.
+  You can reset your advertising identifier in iOS Settings.</p>
 
   <h2>Changes</h2>
-  <p>If this policy changes, the updated version will be published with the app.</p>
+  <p>If this policy changes materially, the “last updated” date above changes and
+  the new version is published here before the app update ships.</p>
 
   <h2>Contact</h2>
-  <p>Questions: <a href="mailto:subotic.djo@gmail.com">subotic.djo@gmail.com</a></p>
+  <p><a href="mailto:subotic.djo@gmail.com">subotic.djo@gmail.com</a></p>
 </div>
 </body>
 </html>

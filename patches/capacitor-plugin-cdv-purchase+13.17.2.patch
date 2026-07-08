@@ -1,0 +1,35 @@
+diff --git a/node_modules/capacitor-plugin-cdv-purchase/ios/Sources/PurchasePlugin/PurchasePlugin.swift b/node_modules/capacitor-plugin-cdv-purchase/ios/Sources/PurchasePlugin/PurchasePlugin.swift
+index c3a0d7e..007386a 100644
+--- a/node_modules/capacitor-plugin-cdv-purchase/ios/Sources/PurchasePlugin/PurchasePlugin.swift
++++ b/node_modules/capacitor-plugin-cdv-purchase/ios/Sources/PurchasePlugin/PurchasePlugin.swift
+@@ -47,9 +47,14 @@ public class PurchasePlugin: CAPPlugin, CAPBridgedPlugin {
+     // MARK: - Lifecycle
+ 
+     override public func load() {
+-        if #available(iOS 15.0, *) {
+-            startTransactionObserver()
+-        }
++        // PATCHED (quadshot): do NOT touch StoreKit here.
++        //
++        // Capacitor calls load() on every linked plugin at app launch, before any
++        // JavaScript runs. Starting the Transaction.updates observer here makes
++        // StoreKit enumerate entitlements immediately, and on a device with no
++        // Apple Account signed in iOS presents a "Sign in to Apple Account" sheet
++        // over the app on first launch. The observer is started from `init(_:)`
++        // instead — i.e. only when JS calls store.initialize(), on user intent.
+     }
+ 
+     deinit {
+@@ -104,6 +109,12 @@ public class PurchasePlugin: CAPPlugin, CAPBridgedPlugin {
+         debugEnabled = call.getBool("debug", false)
+         debugLog("init")
+ 
++        // PATCHED (quadshot): the transaction observer starts here, not in load().
++        // Idempotent — store.initialize() may be called more than once.
++        if sk2.transactionObserverTask == nil {
++            startTransactionObserver()
++        }
++
+         // Load current entitlements and emit to JS so existing subscriptions
+         // are visible immediately on app launch (without requiring a manual restore).
+         Task {

@@ -4,13 +4,17 @@ import { Monetization } from "../systems/Monetization";
 import { createText } from "./widgets";
 
 /**
- * Bottom ad banner — shown on non-gameplay screens (menu / game over) only, so
- * it never covers the launcher. This is a PLACEHOLDER; in production a native
- * AdMob banner renders in this strip (same position). Includes an inline
- * "Remove $0.99" shortcut. No-op once ads are removed / disabled.
+ * Bottom ad banner — a DEV-ONLY Phaser placeholder, off by default.
+ *
+ * No native banner ships. A real AdMob banner is pinned to the bottom of the
+ * *window*, outside the Phaser canvas, in the same strip the launcher pads live
+ * in (LAUNCHER.Y = H-74, hit radius 44) — and nothing inside Phaser can remove
+ * it once GameScene starts. That whole failure mode is designed out via
+ * MONETIZATION.SHOW_BANNER rather than guarded. Rewarded + interstitial carry
+ * the ads instead.
  */
 export function showBanner(scene: Phaser.Scene): Phaser.GameObjects.Container | undefined {
-  if (!Monetization.adsActive()) return undefined;
+  if (!MONETIZATION.SHOW_BANNER || !Monetization.adsActive()) return undefined;
 
   const W = GAME.WIDTH;
   const h = 54;
@@ -22,25 +26,6 @@ export function showBanner(scene: Phaser.Scene): Phaser.GameObjects.Container | 
     .setStrokeStyle(1, 0x223052, 1);
   const tag = createText(scene, 14, cy, "AD", 10, UI.TEXT_DIM, 0);
   const placeholder = createText(scene, W / 2, cy, "your ad here", 13, "#4b5a7a", 0.5);
-  const remove = createText(
-    scene,
-    W - 12,
-    cy,
-    `Remove ${MONETIZATION.REMOVE_ADS_PRICE}`,
-    12,
-    UI.ACCENT,
-    1
-  ).setInteractive({ useHandCursor: true });
-
-  remove.on("pointerup", () => {
-    remove.setText("…");
-    void Monetization.purchaseRemoveAds().then((ok) => {
-      if (!c.scene) return; // scene torn down while the purchase was in flight
-      if (ok) c.destroy();
-      else remove.setText(`Remove ${MONETIZATION.REMOVE_ADS_PRICE}`);
-    });
-  });
-
-  c.add([bg, tag, placeholder, remove]);
+  c.add([bg, tag, placeholder]);
   return c;
 }
