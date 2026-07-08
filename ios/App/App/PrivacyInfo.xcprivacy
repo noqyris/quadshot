@@ -1,13 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  This manifest describes ONLY the app's own first-party code. Each bundled SDK
+  ships its own PrivacyInfo.xcprivacy and Apple aggregates them all:
+    - GoogleMobileAdsResources.bundle/PrivacyInfo.xcprivacy  (declares DeviceID
+      with Tracking=true — this is what produces the App Store "Data Used to
+      Track You: Identifiers" label; the tracking is the SDK's, not ours)
+    - UserMessagingPlatformResources.bundle/PrivacyInfo.xcprivacy
+    - Capacitor.framework / Cordova.framework each carry their own
+
+  NSPrivacyTracking is false because bySubotic runs no servers and the app's own
+  code performs no App-Tracking-Transparency-defined tracking; all IDFA use and
+  cross-app linking happens inside the Google Mobile Ads SDK, declared in its own
+  manifest above. Rule ITMS-91064: "When set to true you need to provide a list
+  of internet domains in NSPrivacyTrackingDomains." Setting it true here would
+  require listing Google's ad domains, and iOS then FAILS every network request
+  to a listed domain whenever ATT is not authorised — which would zero out ad
+  serving (including the npa=1 fallback) for the majority of users who decline
+  the prompt. Google's own manifest sets neither key for exactly this reason.
+
+  The two accessed-API entries cover the app's own Capacitor plugins that have
+  no manifest of their own: Preferences -> UserDefaults (CA92.1), Filesystem ->
+  file timestamp (C617.1). The Google SDKs' required-reason APIs are declared in
+  their own bundled manifests, so they are deliberately NOT duplicated here.
+-->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
-	<true/>
-	<key>NSPrivacyTrackingDomains</key>
-	<array/>
-	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<false/>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>
