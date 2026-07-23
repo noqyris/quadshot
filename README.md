@@ -42,16 +42,26 @@ through at one speed, then repeat faster, then fastest:
 | ----- | ----- | ---- | ----- |
 | 1 | 0 | match shape | slow |
 | 2 | 1,200 | match colour | slow |
-| 3 | 2,600 | cross-match | slow |
+| 3 | 2,600 | cross-match (one pair swapped) | slow |
 | 4 | 4,200 | match shape | medium |
 | 5 | 6,200 | match colour | medium |
-| 6 | 8,400 | cross-match | medium |
+| 6 | 8,400 | double cross (both pairs swapped) | medium |
 | 7 | 10,800 | match shape | fast |
 | 8 | 13,600 | match colour | fast |
-| 9 | 16,800 | cross-match | fast |
+| 9 | 16,800 | triple cross (three-way rotation) | fast |
 
 Rules: **match shape** (hit the same symbol), **match colour** (shape is a
-decoy — hit by colour), **cross-match** (`□→○`, `○→△`, `△→✕`, `✕→□`). Each phase
+decoy — hit by colour), **cross-match** — the one rule that also escalates
+between visits, climbing a rung of the swap ladder (`CROSS_TIERS`) each time:
+
+| Cross tier | Phase | Mapping | Untouched |
+| ---------- | ----- | ------- | --------- |
+| CROSS-MATCH | 3 | `✕↔□` | `△ ○` still hit their own |
+| DOUBLE CROSS | 6 | `✕↔□`, `△↔○` | — nothing hits its own |
+| TRIPLE CROSS | 9 | `△→○→✕→△` | `□` still hits its own |
+
+Anything a tier leaves alone keeps hitting its own kind, so each rung adds
+exactly one new thing to hold in your head. Each phase
 has a fixed speed (no continuous ramp). Scoring: `100 × multiplier`, where
 `multiplier = clamp(1 + floor(combo / 3), 1, 5)`.
 

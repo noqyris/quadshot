@@ -35,6 +35,44 @@ fastlane release    # → uploads + submits for App Store review
 `fastlane build_ipa` runs `npm run build && npx cap sync ios`, bumps the build
 number, and archives a signed app-store build. `beta`/`release` add the upload.
 
+## AdMob app readiness review (`app-ads.txt`)
+
+Since January 2025 AdMob will not let a newly registered app **fully serve ads**
+until two things happen: the app is verified with an `app-ads.txt` file, and it
+passes AdMob's *app readiness* review. Until then you get limited/no fill —
+which looks exactly like "my ads don't work".
+
+The file itself is one line and already lives in this repo at
+[`public/app-ads.txt`](public/app-ads.txt) (Vite copies `public/` to the site
+root, so any host that serves the web build also serves it):
+
+```
+google.com, pub-3307486877162157, DIRECT, f08c47fec0942fa0
+```
+
+**The catch: AdMob only crawls the _hostname_ of the developer website in your
+store listing, at the domain root.** The privacy page is on GitHub Pages at
+`https://dsuboticgreco.github.io/quadshot/privacy.html`, so the crawler will
+fetch `https://dsuboticgreco.github.io/app-ads.txt` — the `/quadshot/` project
+repo is never consulted. That path is only servable from the **user-site repo**
+`dsuboticgreco.github.io`; if it doesn't exist yet, create it (public, with an
+`app-ads.txt` at its root) or point the listing at a domain you control.
+
+Steps, in order:
+1. Publish the line above at `https://<your-domain>/app-ads.txt` — plain text,
+   HTTP 200, no redirect to a different host. Verify in a browser.
+2. App Store Connect → your app → **Marketing URL** = a URL on that same host
+   (App Information / version metadata). This is the field AdMob reads.
+3. AdMob → *Apps* → Quadshot → *App settings* → **app-ads.txt** → *Check for
+   updates*. Crawling and listing changes each take up to 24 h.
+4. Once verified, AdMob runs the app readiness review automatically. Watch
+   *Apps → Quadshot* for "Ready" / any policy flags.
+
+Already satisfied on the app side (no action needed): `GADApplicationIdentifier`
+in `Info.plist`, the full SKAdNetwork id list, `NSUserTrackingUsageDescription`
+plus the ATT prompt, UMP/GDPR consent flow in `Monetization.ts`, and
+`PrivacyInfo.xcprivacy`.
+
 ## Notes
 - **Privacy:** the app is currently 100% offline / no tracking → "Data Not Collected"
   on the App Privacy form. (If you add the Supabase global leaderboard later, that

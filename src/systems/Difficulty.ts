@@ -1,4 +1,4 @@
-import { DESIGN_HEIGHT, GAME, MatchMode, PHASES, PhaseDef, Sym } from "../config/constants";
+import { CrossTier, DESIGN_HEIGHT, GAME, MatchMode, PHASES, PhaseDef, Sym } from "../config/constants";
 
 /**
  * Owns the active phase. The 9 phases are score-gated; each phase carries a
@@ -59,6 +59,11 @@ export class Difficulty {
 
   getMode(): MatchMode {
     return this.phase.mode;
+  }
+
+  /** The live rung of the cross ladder (undefined outside cross phases). */
+  getCrossTier(): CrossTier | undefined {
+    return this.phase.cross;
   }
 
   getActiveSymbols(): Sym[] {

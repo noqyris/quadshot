@@ -17,6 +17,8 @@ PODS:
     - Capacitor
   - CapacitorShare (6.0.4):
     - Capacitor
+  - CapawesomeCapacitorAppReview (6.0.1):
+    - Capacitor
   - Google-Mobile-Ads-SDK (11.3.0):
     - GoogleUserMessagingPlatform (>= 1.1)
   - GoogleUserMessagingPlatform (2.7.0)
@@ -31,6 +33,7 @@ DEPENDENCIES:
   - CapacitorPluginCdvPurchase (from `../../node_modules/capacitor-plugin-cdv-purchase`)
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
+  - "CapawesomeCapacitorAppReview (from `../../node_modules/@capawesome/capacitor-app-review`)"
   - GoogleUserMessagingPlatform (= 2.7.0)
 
 SPEC REPOS:
@@ -57,6 +60,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/preferences"
   CapacitorShare:
     :path: "../../node_modules/@capacitor/share"
+  CapawesomeCapacitorAppReview:
+    :path: "../../node_modules/@capawesome/capacitor-app-review"
 
 SPEC CHECKSUMS:
   Capacitor: c95400d761e376be9da6be5a05f226c0e865cebf
@@ -68,9 +73,10 @@ SPEC CHECKSUMS:
   CapacitorPluginCdvPurchase: ebad92b05033b34709a3a46dc04350ba9242753e
   CapacitorPreferences: 5848e0691b36b4bb4acc98e481ab56d451578d30
   CapacitorShare: 77ff779e3b7c6ae9fb5461e52cf7ef805d429491
+  CapawesomeCapacitorAppReview: 0df32728768989c2c57077def53374b19297314f
   Google-Mobile-Ads-SDK: 301a16c461c331ba34ff4dab40a22ab7c147af61
   GoogleUserMessagingPlatform: a8b56893477f67212fbc8411c139e61d463349f5
 
-PODFILE CHECKSUM: 6e503e986e12490a6ad8ed7b3e4d6486e3210695
+PODFILE CHECKSUM: e7f2986bf7c60c09d403a0a8971515edae662666
 
 COCOAPODS: 1.16.2

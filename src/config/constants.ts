@@ -153,8 +153,71 @@ export const CLIMB = {
   MAX: 130, //     never climb more than this in total
 } as const;
 
-/** Cross-mapping cycle (Phase 4): firing X destroys the next symbol in the ring. */
-export const CROSS_CYCLE: Sym[] = [Sym.SQUARE, Sym.CIRCLE, Sym.TRIANGLE, Sym.CROSS];
+/**
+ * The cross-match ladder.
+ *
+ * Rather than dropping a full four-way rotation on the player at once, the rule
+ * arrives as *swaps*: first a single pair trades places, then both pairs, then
+ * three symbols rotate. Anything a tier doesn't touch still hits its own kind,
+ * so every rung adds exactly one new thing to hold in your head — and each one
+ * gets its own name (CROSS-MATCH → DOUBLE CROSS → TRIPLE CROSS) so the run
+ * reads as an escalating challenge instead of one opaque rule.
+ */
+export interface CrossTier {
+  title: string; //       rule-card headline — the name of this twist
+  instruction: string; // one-line explanation shown under the headline
+  kills: Record<Sym, Sym>; // fired symbol → the symbol it destroys
+  twisted: Sym[]; //      the symbols this tier rewires (the rest stay identity)
+}
+
+/**
+ * Build a tier's kill map: identity everywhere, overridden by swaps / a cycle.
+ * Swaps and the cycle must touch disjoint symbols — the map has to stay a
+ * permutation, or some target type ends up with no pad that can destroy it.
+ */
+function crossSpec(spec: {
+  swaps?: Array<[Sym, Sym]>;
+  cycle?: Sym[];
+}): Pick<CrossTier, "kills" | "twisted"> {
+  const kills = {} as Record<Sym, Sym>;
+  for (const s of ALL_SYMBOLS) kills[s] = s; // untouched symbols still hit their own
+  const twisted: Sym[] = [];
+  for (const [a, b] of spec.swaps ?? []) {
+    kills[a] = b;
+    kills[b] = a;
+    twisted.push(a, b);
+  }
+  const cycle = spec.cycle ?? [];
+  cycle.forEach((s, i) => {
+    kills[s] = cycle[(i + 1) % cycle.length];
+    twisted.push(s);
+  });
+  return { kills, twisted };
+}
+
+/** The three rungs, in the order the player meets them (phases 3, 6, 9). */
+export const CROSS_TIERS: CrossTier[] = [
+  {
+    title: "CROSS-MATCH",
+    instruction: "CROSS and SQUARE are swapped",
+    ...crossSpec({ swaps: [[Sym.CROSS, Sym.SQUARE]] }),
+  },
+  {
+    title: "DOUBLE CROSS",
+    instruction: "Now both pairs are swapped",
+    ...crossSpec({
+      swaps: [
+        [Sym.CROSS, Sym.SQUARE],
+        [Sym.TRIANGLE, Sym.CIRCLE],
+      ],
+    }),
+  },
+  {
+    title: "TRIPLE CROSS",
+    instruction: "Three symbols rotate — follow the arrows",
+    ...crossSpec({ cycle: [Sym.TRIANGLE, Sym.CIRCLE, Sym.CROSS] }),
+  },
+];
 
 export type MatchMode = "identity" | "cross" | "color";
 
@@ -163,6 +226,7 @@ export interface PhaseDef {
   scoreThreshold: number; // score at which this phase begins
   symbols: Sym[]; // symbols that may spawn / be fired
   mode: MatchMode;
+  cross?: CrossTier; // cross mode only: which rung of the ladder is live
   fallSpeed: number; // px/sec the targets fall (the speed tier)
   spawnInterval: number; // ms between spawns (the speed tier)
   banner: string; // headline shown when the phase starts
@@ -189,21 +253,44 @@ export const SPEED_NAMES = ["SLOW", "MEDIUM", "FAST"] as const;
  *   1-3  SLOW    (shape, colour, cross)
  *   4-6  MEDIUM  (shape, colour, cross)
  *   7-9  FAST    (shape, colour, cross)
+ *
+ * Cross is the one rule that *also* escalates between visits: each of its three
+ * appearances climbs a rung of the swap ladder (see CROSS_TIERS), so phase 9 is
+ * both the fastest and the most twisted the run ever gets.
  */
 export const PHASES: PhaseDef[] = [
   // --- Slow tier ---
   { index: 1, scoreThreshold: 0, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 1", subBanner: "MATCH THE SHAPE" },
   { index: 2, scoreThreshold: 12, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 2", subBanner: "MATCH THE COLOR" },
-  { index: 3, scoreThreshold: 26, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 3", subBanner: "CROSS-MATCH" },
+  { index: 3, scoreThreshold: 26, symbols: ALL_FOUR, mode: "cross", cross: CROSS_TIERS[0], fallSpeed: SPEED.SLOW.fall, spawnInterval: SPEED.SLOW.spawn, banner: "PHASE 3", subBanner: "CROSS-MATCH  •  ONE PAIR SWAPPED" },
   // --- Medium tier ---
   { index: 4, scoreThreshold: 42, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 4", subBanner: "MATCH THE SHAPE  •  FASTER" },
   { index: 5, scoreThreshold: 62, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 5", subBanner: "MATCH THE COLOR  •  FASTER" },
-  { index: 6, scoreThreshold: 84, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 6", subBanner: "CROSS-MATCH  •  FASTER" },
+  { index: 6, scoreThreshold: 84, symbols: ALL_FOUR, mode: "cross", cross: CROSS_TIERS[1], fallSpeed: SPEED.MEDIUM.fall, spawnInterval: SPEED.MEDIUM.spawn, banner: "PHASE 6", subBanner: "DOUBLE CROSS  •  BOTH PAIRS SWAPPED" },
   // --- Fast tier ---
   { index: 7, scoreThreshold: 108, symbols: ALL_FOUR, mode: "identity", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 7", subBanner: "MATCH THE SHAPE  •  FASTEST" },
   { index: 8, scoreThreshold: 136, symbols: ALL_FOUR, mode: "color", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 8", subBanner: "MATCH THE COLOR  •  FASTEST" },
-  { index: 9, scoreThreshold: 168, symbols: ALL_FOUR, mode: "cross", fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 9", subBanner: "CROSS-MATCH  •  FASTEST" },
+  { index: 9, scoreThreshold: 168, symbols: ALL_FOUR, mode: "cross", cross: CROSS_TIERS[2], fallSpeed: SPEED.FAST.fall, spawnInterval: SPEED.FAST.spawn, banner: "PHASE 9", subBanner: "TRIPLE CROSS  •  FASTEST" },
 ];
+
+/**
+ * Store identity for the "rate this game" surfaces. The Apple app id is the
+ * numeric App Store Connect id (same one the AdMob app record points at).
+ */
+export const APP_STORE_ID = "6786440884";
+
+/**
+ * In-app rating prompt.
+ *
+ * iOS decides whether the sheet is actually drawn (SKStoreReviewController is
+ * hard-capped at 3 prompts a year and does nothing at all in TestFlight), so
+ * these knobs only govern *when we are willing to ask*: several runs in, at the
+ * moment the player beats their own record, once per app version.
+ */
+export const RATING = {
+  MIN_GAMES: 6, //     finished runs required before we ever ask
+  DELAY_MS: 1200, //   let the new-best celebration land first
+} as const;
 
 /** Storage keys for persisted state. */
 export const STORE_KEYS = {
@@ -215,6 +302,7 @@ export const STORE_KEYS = {
   TUTORIAL: "quadshot.tutorialSeen",
   ADS_REMOVED: "quadshot.adsRemoved",
   RUNS_SINCE_AD: "quadshot.runsSinceAd",
+  RATE_PROMPTED: "quadshot.ratePromptedVersion",
 } as const;
 
 /**

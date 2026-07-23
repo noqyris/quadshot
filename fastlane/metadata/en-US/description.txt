@@ -1,0 +1,28 @@
+Quadshot is a fast, minimal reflex arcade game.
+
+Symbols fall from the top. A row of four glowing pads wraps around the bottom of the screen — slide it, line up the matching pad, and fire straight up to destroy each symbol before it crosses the line. Miss three and it's over.
+
+Nine escalating phases keep changing the rules and the speed:
+
+• MATCH THE SHAPE — hit each symbol with its own pad
+• MATCH THE COLOR — the shape is a decoy; match by color instead
+• CROSS-MATCH — two symbols trade places: fire cross to kill square
+• DOUBLE CROSS — now both pairs are swapped; nothing hits its own
+• TRIPLE CROSS — three symbols rotate, and only one still plays fair
+
+…each played slow, then faster, then fastest.
+
+The muscle memory you build in phase 1 is the thing working against you by phase 9. Every rule change is a reaction test on top of a reflex test. Can you rewire fast enough?
+
+FEATURES
+
+• One-thumb controls — slide to aim, tap to fire
+• Endless arcade run with combo multipliers and streak rewards
+• Nine phases, three rules, three speeds — a new challenge every few seconds
+• Local high scores and lifetime stats
+• Haptic feedback and punchy neon juice
+• Plays offline — no accounts, no sign-up, no waiting
+• Share your score card and dare a friend to beat it
+• Watch an ad to continue a run, or remove ads with a one-time purchase
+
+Pick it up for one run. Stay for the run after that.

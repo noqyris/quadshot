@@ -1,9 +1,10 @@
 import Phaser from "phaser";
-import { GAME, HIGH_SCORE_COUNT, SCENES, UI } from "../config/constants";
+import { GAME, HIGH_SCORE_COUNT, RATING, SCENES, UI } from "../config/constants";
 import { createBackground } from "../ui/Background";
 import { showBanner } from "../ui/Banner";
 import { createButton, createLinkButton, createText } from "../ui/widgets";
 import { Monetization } from "../systems/Monetization";
+import { RateApp } from "../systems/RateApp";
 import { RunResult, Storage } from "../systems/Storage";
 import { Share } from "../systems/Share";
 import { Sfx } from "../systems/Sfx";
@@ -156,12 +157,28 @@ export class GameOverScene extends Phaser.Scene {
           if (isNewBest) {
             Sfx.match(6);
             this.tweens.add({ targets: bestLabel, scale: { from: 1, to: 1.16 }, duration: 220, yoyo: true, ease: "Sine.inOut" });
+            this.maybeAskForRating();
           }
         },
       });
     } else {
       scoreText.setText("0");
     }
+  }
+
+  /**
+   * A fresh personal best is the one moment in the game worth spending a review
+   * prompt on. Let the celebration land first, then ask only if the player is
+   * still sitting on this screen and hasn't started an ad or purchase flow —
+   * `busy` covers the rewarded-continue tap, which must never be interrupted.
+   */
+  private maybeAskForRating(): void {
+    this.time.delayedCall(RATING.DELAY_MS, () => {
+      if (this.busy || !this.scene.isActive()) return;
+      void Storage.getStats().then((stats) =>
+        RateApp.maybeAsk({ isNewBest: true, gamesPlayed: stats.gamesPlayed })
+      );
+    });
   }
 
   // --- Flow -------------------------------------------------------------------

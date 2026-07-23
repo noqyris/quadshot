@@ -4,18 +4,48 @@ Draft copy for the App Store and Google Play listings. Tune wording per store.
 
 ## App identity
 
-- **Name:** Quadshot
-- **Subtitle (iOS, ≤30 chars):** One more run. One thumb.  _(alt, keyword-rich: "Fast neon reflex arcade")_
-- **Short description (Play, ≤80 chars):** Slide, aim, fire. Match the falling symbols before they hit the floor.
+- **Name (iOS, ≤30):** `Quadshot: Reflex Arcade` — 23 chars
+- **Subtitle (iOS, ≤30):** `Reaction & fast tap game` — 24 chars
+- **Title (Play, ≤30):** `Quadshot: Reflex Arcade`
+- **Short description (Play, ≤80):** `Tap fast, match the falling symbols, and survive rules that keep flipping.` — 73 chars
 - **Bundle / Application ID:** `com.bysubotic.quadshot`
-- **Category:** Games → Arcade / Action
+- **Category:** Games → Arcade (secondary: Action)
 - **Price:** Free
 - **Age rating:** 4+ / Everyone (no objectionable content, no data collection)
 
+## ASO — keyword strategy
+
+The App Store indexes **name + subtitle + keywords field** with equal weight, and
+a term repeated across them is wasted space. So the three fields are kept
+disjoint:
+
+| Field | Carries |
+| ----- | ------- |
+| Name | quadshot, reflex, arcade |
+| Subtitle | reaction, fast, tap, game |
+| Keywords | everything else, below |
+
+**Keywords field (iOS, ≤100 chars — no spaces after commas, no plurals, nothing
+already used above):**
+
+```
+shooter,shape,match,color,combo,streak,endless,twitch,speed,skill,timing,focus,casual,neon,offline
+```
+
+_98 chars._ Singulars cover plurals; Apple already indexes the developer name and
+the category, so neither is repeated. `offline` and `casual` earn their slots —
+both are high-volume browse terms in this genre.
+
+Google Play ignores a keyword field and ranks on the **full description**
+instead, so the long copy below works "reflex", "reaction", "arcade", "tap" and
+"combo" in naturally rather than stuffing them.
+
 ## Promo text (iOS, ≤170 chars)
 
-Slide, aim, fire. Chain combos for huge multipliers, smash your high score, then
-dare your friends: can you beat me? Endless neon reflex arcade.
+_Editable any time without a review — keep the current hook here._
+
+Slide, aim, fire. Then the rules start swapping under you: cross kills square,
+both pairs flip, three symbols rotate. How long does your muscle memory hold?
 
 ## Description
 
@@ -28,8 +58,13 @@ each symbol before it crosses the line. Miss three and it's over.
 Nine escalating phases keep changing the rules and the speed:
 • MATCH THE SHAPE — hit each symbol with its own pad
 • MATCH THE COLOR — the shape is a decoy; match by colour instead
-• CROSS-MATCH — each symbol destroys the next in the ring
+• CROSS-MATCH — two symbols trade places: fire cross to kill square
+• DOUBLE CROSS — now both pairs are swapped; nothing hits its own
+• TRIPLE CROSS — three symbols rotate, and only one still plays fair
 …each played slow, then faster, then fastest.
+
+The muscle memory you build in phase 1 is the thing working against you by
+phase 9. Can you rewire it fast enough?
 
 Features:
 • One-thumb controls — slide to aim, tap to fire
@@ -65,8 +100,14 @@ Feature-graphic tagline: **"Chain combos. Beat your friends."**
 
 ## Required links
 
-- **Privacy policy URL:** host `PRIVACY.md` (e.g. GitHub Pages) and link it.
-- **Support URL / email:** subotic.djo@gmail.com
+- **Privacy policy URL:** <https://dsuboticgreco.github.io/quadshot/privacy.html>
+- **Support URL:** <https://dsuboticgreco.github.io/quadshot/> (email: subotic.djo@gmail.com)
+- **Marketing URL:** <https://dsuboticgreco.github.io/quadshot/> — this one is
+  load-bearing beyond marketing: AdMob crawls its **host** for `app-ads.txt`
+  before it will fully serve ads. See the app-ads.txt section in `SUBMIT.md`.
+
+All three are checked into `fastlane/metadata/en-US/` so a `fastlane release`
+pushes them with the build.
 
 ## Virality — share loop (built)
 

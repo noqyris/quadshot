@@ -1,0 +1,1 @@
+shooter,shape,match,color,combo,streak,endless,twitch,speed,skill,timing,focus,casual,neon,offline

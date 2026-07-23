@@ -186,6 +186,20 @@ class StorageService {
   async setRunsSinceAd(n: number): Promise<void> {
     await this.setRaw(STORE_KEYS.RUNS_SINCE_AD, String(Math.max(0, n)));
   }
+
+  /**
+   * App version the rating prompt was last offered for ("" = never asked).
+   * Storing the version, not a boolean, is what lets a later release ask again
+   * without ever asking twice for the same build. Survives resetProgress —
+   * wiping your scores is not an invitation to be nagged again.
+   */
+  async getRatePromptedVersion(): Promise<string> {
+    return (await this.getRaw(STORE_KEYS.RATE_PROMPTED)) ?? "";
+  }
+
+  async setRatePromptedVersion(version: string): Promise<void> {
+    await this.setRaw(STORE_KEYS.RATE_PROMPTED, version);
+  }
 }
 
 export const Storage = new StorageService();

@@ -220,7 +220,7 @@ export class GameScene extends Phaser.Scene {
   private applyPhase(phase: PhaseDef): void {
     // All four controller pads stay lit at all times; the legend is the small,
     // always-on reminder, and the rule card explains the phase prominently.
-    this.hud.setLegend(phase.mode, phase.symbols);
+    this.hud.setLegend(phase);
     this.hud.showRuleCard(phase);
     // Brief breather: hold new spawns so the rule card is readable / fair.
     this.spawnGraceUntil = this.time.now + TIMING.SPAWN_GRACE;
@@ -320,6 +320,7 @@ export class GameScene extends Phaser.Scene {
 
   private resolveCollisions(): void {
     const mode = this.difficulty.getMode();
+    const cross = this.difficulty.getCrossTier();
     for (const pObj of this.projectiles.getChildren()) {
       const p = pObj as Projectile;
       if (!p.active) continue;
@@ -327,7 +328,7 @@ export class GameScene extends Phaser.Scene {
         const t = tObj as Target;
         if (!t.active) continue;
         // Type-locked: only matching pairs can interact; all others pass through.
-        if (!MatchRules.canKill(p, t, mode)) continue;
+        if (!MatchRules.canKill(p, t, mode, cross)) continue;
         const rr = p.hitRadius + t.hitRadius;
         const dx = p.x - t.x;
         const dy = p.y - t.y;

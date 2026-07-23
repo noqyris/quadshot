@@ -2,8 +2,9 @@ import Phaser from "phaser";
 import {
   ALL_SYMBOLS,
   COLORS,
+  CrossTier,
+  CROSS_TIERS,
   GAME,
-  MatchMode,
   PhaseDef,
   SCORE,
   Sym,
@@ -235,12 +236,12 @@ export class Hud {
     }
   }
 
-  /** Rebuild the legend for the active rule + symbol set. */
-  setLegend(mode: MatchMode, symbols: Sym[]): void {
+  /** Rebuild the legend for the active phase's rule. */
+  setLegend(phase: PhaseDef): void {
     this.legend.removeAll(true);
-    if (mode === "cross") this.buildCrossLegend();
-    else if (mode === "color") this.buildColorLegend();
-    else this.buildIdentityLegend(symbols);
+    if (phase.mode === "cross") this.buildCrossLegend(phase.cross ?? CROSS_TIERS[0]);
+    else if (phase.mode === "color") this.buildColorLegend();
+    else this.buildIdentityLegend(phase.symbols);
   }
 
   private buildIdentityLegend(symbols: Sym[]): void {
@@ -257,23 +258,25 @@ export class Hud {
     this.placeRow(items, 0, 8);
   }
 
-  private buildCrossLegend(): void {
+  private buildCrossLegend(cross: CrossTier): void {
     // Caption makes the arrow unambiguous: the left symbol you fire destroys the
-    // right one. Below it, four explicit "fired → destroyed" pairs.
+    // right one. Below it, all four "fired → destroyed" pairs in pad order —
+    // the rows this tier rewires burn bright, the untouched ones sit back, so a
+    // glance answers "what changed?" without re-reading the whole strip.
     const caption = this.legendText("FIRE  →  DESTROYS", 11);
     caption.x = 0;
     caption.y = -9;
     this.legend.add(caption);
 
-    const pairs = MatchRules.crossLegend().map(([fired, target]) => ({
-      obj: this.makeCrossPair(fired, target),
+    const pairs = MatchRules.crossLegend(cross).map((p) => ({
+      obj: this.makeCrossPair(p.fired, p.kills, p.twisted),
       w: 44,
     }));
     this.placeRow(pairs, 9, 10);
   }
 
   /** A single "fired → destroyed" pair as a self-contained container. */
-  private makeCrossPair(fired: Sym, target: Sym): Phaser.GameObjects.Container {
+  private makeCrossPair(fired: Sym, target: Sym, twisted: boolean): Phaser.GameObjects.Container {
     const c = this.scene.add.container(0, 0);
     const a = this.legendIcon(fired, 15);
     a.x = -15;
@@ -281,6 +284,7 @@ export class Hud {
     const t = this.legendIcon(target, 15);
     t.x = 15;
     c.add([a, arrow, t]);
+    if (!twisted) c.setAlpha(0.34);
     return c;
   }
 
@@ -305,14 +309,21 @@ export class Hud {
       UI.ACCENT
     );
 
-    const title = createText(this.scene, cx, cy - 42, ruleTitle(phase.mode), 40, UI.TEXT)
+    const title = createText(this.scene, cx, cy - 42, ruleTitle(phase.mode, phase.cross), 40, UI.TEXT)
       .setResolution(3)
       .setShadow(0, 0, UI.ACCENT, 18, true, true);
 
-    const instr = createText(this.scene, cx, cy + 2, ruleInstruction(phase.mode), 17, UI.TEXT_DIM);
+    const instr = createText(
+      this.scene,
+      cx,
+      cy + 2,
+      ruleInstruction(phase.mode, phase.cross),
+      17,
+      UI.TEXT_DIM
+    );
 
     const demo = this.scene.add.container(0, 0);
-    buildRuleVisual(this.scene, demo, cx, cy + 52, phase.mode);
+    buildRuleVisual(this.scene, demo, cx, cy + 52, phase.mode, phase.cross);
 
     c.add([meta, title, instr, demo]);
 

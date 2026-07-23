@@ -1,0 +1,9 @@
+CROSS-MATCH is now a ladder instead of a wall.
+
+• PHASE 3 — CROSS-MATCH: cross and square trade places; the other two still hit their own
+• PHASE 6 — DOUBLE CROSS: both pairs are swapped, nothing hits its own
+• PHASE 9 — TRIPLE CROSS: three symbols rotate, and only square still plays fair
+
+Each rung gets its own name, rule card and legend, and the HUD now highlights exactly which symbols have been rewired.
+
+Also: you can rate the game from Settings.

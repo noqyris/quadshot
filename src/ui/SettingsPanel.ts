@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { GAME, MONETIZATION, UI } from "../config/constants";
 import { Haptics } from "../systems/Haptics";
 import { Monetization } from "../systems/Monetization";
+import { RateApp } from "../systems/RateApp";
 import { Sfx } from "../systems/Sfx";
 import { Storage } from "../systems/Storage";
 import { createButton, createText } from "./widgets";
@@ -80,6 +81,18 @@ export function openSettings(scene: Phaser.Scene, onClose: () => void): void {
       c.add(restore);
     }
   }
+
+  // Always-available way to rate, independent of the automatic prompt: iOS caps
+  // that sheet at three a year and skips it entirely in TestFlight, so a player
+  // who *wants* to leave a review needs a door that always opens.
+  const rate = createText(scene, cx, cy + 34, "★  RATE QUADSHOT", 15, UI.TEXT, 0.5).setInteractive({
+    useHandCursor: true,
+  });
+  rate.on("pointerup", () => {
+    Sfx.unlock();
+    void RateApp.openStore();
+  });
+  c.add(rate);
 
   // Reset progress — two-tap confirm.
   const reset = createText(scene, cx, cy + 70, "RESET PROGRESS", 16, UI.DANGER, 0.5).setInteractive({
