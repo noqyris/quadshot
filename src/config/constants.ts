@@ -51,8 +51,8 @@ export const LAYOUT = {
  * inline at their tween for readability.
  */
 export const TIMING = {
-  SPAWN_GRACE: 900, //     hold new spawns at each phase start (rule-card breather)
-  RULE_CARD_HOLD: 1900, // how long the rule card stays before it fades
+  SPAWN_GRACE: 2000, //    hold new spawns at each phase start (rule-card breather)
+  RULE_CARD_HOLD: 2600, // how long the rule card stays before it fades
   LOW_LIFE_PULSE: 900, //  half-cycle of the last-life danger frame
   GAMEOVER_HANG: 360, //   pause on the death shake before fading to game over
   SCENE_FADE: 260, //      scene fade in/out

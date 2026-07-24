@@ -218,11 +218,16 @@ export class GameScene extends Phaser.Scene {
   // --- Phases -----------------------------------------------------------------
 
   private applyPhase(phase: PhaseDef): void {
+    // Wipe whatever is still falling. Those targets were read under the old
+    // rule, and leaving them mid-air means the new rule arrives already owing
+    // you shots you can no longer make — so the phase starts on a clean field.
+    this.sweepTargets();
     // All four controller pads stay lit at all times; the legend is the small,
     // always-on reminder, and the rule card explains the phase prominently.
     this.hud.setLegend(phase);
     this.hud.showRuleCard(phase);
-    // Brief breather: hold new spawns so the rule card is readable / fair.
+    // Breather: hold new spawns while the rule card is up, so the player reads
+    // the new rule on an empty screen instead of under fire.
     this.spawnGraceUntil = this.time.now + TIMING.SPAWN_GRACE;
     // Climb: raise the rack + miss line a little more each phase so obstacles
     // have less distance (and time) to travel.
@@ -711,7 +716,6 @@ export class GameScene extends Phaser.Scene {
 
   private devJumpToPhase(index: number): void {
     this.difficulty.devForcePhase(index);
-    this.clearTargets();
     this.scoreMgr.combo = 0;
     this.hud.setCombo(0, this.scoreMgr.multiplier);
     this.applyPhase(this.difficulty.getPhase());
@@ -723,10 +727,17 @@ export class GameScene extends Phaser.Scene {
     this.devSpeedLabel?.setText(`${this.devTimeScale}×`);
   }
 
-  private clearTargets(): void {
+  /**
+   * Clear the field at a rule change, with a puff in each target's own colour
+   * so it reads as a deliberate sweep rather than obstacles blinking out. No
+   * score and no miss — nothing here was earned or lost.
+   */
+  private sweepTargets(): void {
     for (const obj of this.targets.getChildren()) {
       const t = obj as Target;
-      if (t.active) t.deactivate();
+      if (!t.active) continue;
+      this.burstEmitters.get(t.shape)?.explode(5, t.x, t.y);
+      t.deactivate();
     }
   }
 }
