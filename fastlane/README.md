@@ -47,6 +47,14 @@ Build web + sync Capacitor + archive a signed App Store build
 
 Upload to TestFlight
 
+### ios beta_upload
+
+```sh
+[bundle exec] fastlane ios beta_upload
+```
+
+Re-upload the ipa already in build/ (no rebuild)
+
 ### ios release
 
 ```sh

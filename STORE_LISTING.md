@@ -85,11 +85,12 @@ ordered as a story. Reuse the same set for Google Play phone screenshots.
 1. `screenshot-01-title.png` — "FOUR PADS. ONE THUMB."
 2. `screenshot-02-shape.png` — "SLIDE. AIM. FIRE."
 3. `screenshot-03-color.png` — "DON'T TRUST THE SHAPE"
-4. `screenshot-04-cross.png` — "REWIRE YOUR REFLEXES"
-5. `screenshot-05-combo.png` — "CHAIN IT, 5X IT"
-6. `screenshot-06-share.png` — "CAN YOU BEAT ME?"
+4. `screenshot-04-cross.png` — "THEN THE RULES SWAP"
+5. `screenshot-05-triple.png` — "AND SWAP AGAIN"
+6. `screenshot-06-combo.png` — "CHAIN IT, 5X IT"
+7. `screenshot-07-share.png` — "CAN YOU BEAT ME?"
 
-**iPad 12.9"/13" set** (required — iPad is supported): `screenshot-ipad-01..06-*.png`
+**iPad 12.9"/13" set** (required — iPad is supported): `screenshot-ipad-01..07-*.png`
 at 2048×2732 (portrait game in a centred device frame on a branded background).
 
 Other store images in `store-assets/`: `app-icon-1024.png` (iOS, no alpha),

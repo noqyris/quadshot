@@ -1,9 +1,10 @@
-CROSS-MATCH is now a ladder instead of a wall.
+The cross-match rule now arrives in three escalating steps instead of all at once.
 
-• PHASE 3 — CROSS-MATCH: cross and square trade places; the other two still hit their own
-• PHASE 6 — DOUBLE CROSS: both pairs are swapped, nothing hits its own
-• PHASE 9 — TRIPLE CROSS: three symbols rotate, and only square still plays fair
+• CROSS-MATCH — two symbols trade places
+• DOUBLE CROSS — both pairs swapped, nothing hits its own
+• TRIPLE CROSS — three symbols rotate
 
-Each rung gets its own name, rule card and legend, and the HUD now highlights exactly which symbols have been rewired.
+The top-of-screen legend now shows only what changed, the field clears at every rule
+change, and the new rule holds on screen longer so you can prepare for it.
 
-Also: you can rate the game from Settings.
+Also: Remove Ads moved to the title screen, and shared scores now link to the App Store.

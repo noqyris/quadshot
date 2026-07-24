@@ -87,6 +87,20 @@ platform :ios do
     )
   end
 
+  # Answers Apple asks at submission time. The app serves AdMob ads and calls
+  # ATT, so IDFA use is "yes / serves ads" — claiming otherwise is a false
+  # privacy answer, not a shortcut. It attributes nothing itself (no install or
+  # action attribution of its own), and it honours Limit Ad Tracking: every ad
+  # request falls back to npa=1 when ATT is not authorised (see Monetization).
+  SUBMISSION_INFO = {
+    export_compliance_uses_encryption: false,
+    add_id_info_uses_idfa: true,
+    add_id_info_serves_ads: true,
+    add_id_info_tracks_action: false,
+    add_id_info_tracks_install: false,
+    add_id_info_limits_tracking: true,
+  }
+
   desc "Upload + submit for App Store review"
   lane :release do
     build_ipa
@@ -96,7 +110,24 @@ platform :ios do
       automatic_release: false,
       force: true,                       # skip the HTML metadata preview prompt
       precheck_include_in_app_purchases: false,
-      submission_information: { export_compliance_uses_encryption: false }
+      submission_information: SUBMISSION_INFO
+    )
+  end
+
+  desc "Push metadata + screenshots and submit a build that is ALREADY on TestFlight"
+  # Rebuilding to submit would ship a binary nobody has played. This submits the
+  # exact build that was tested: pass BUILD_NUMBER (and VERSION for the train).
+  lane :submit_existing do
+    upload_to_app_store(
+      api_key: asc_key,
+      app_version: ENV.fetch("VERSION"),
+      build_number: ENV.fetch("BUILD_NUMBER"),
+      skip_binary_upload: true,
+      submit_for_review: true,
+      automatic_release: false,
+      force: true,
+      precheck_include_in_app_purchases: false,
+      submission_information: SUBMISSION_INFO
     )
   end
 end

@@ -23,21 +23,31 @@ into the screenshots.
 | `screenshot-01..06-*.png` | 1320×2868 (within 320–3840, portrait) | **Phone screenshots** (2–8). Reuse the same 6. |
 
 ## Screenshot order / captions
+
+Seven, ordered so the middle three carry the escalation the game is sold on.
+
 1. **title** — "FOUR PADS. ONE THUMB." · Fast neon reflex arcade. Try to stop.
 2. **shape** — "SLIDE. AIM. FIRE." · Hit every symbol with its own pad.
-3. **color** — "DON'T TRUST THE SHAPE" · Shape's a decoy. Match the colour.
-4. **cross** — "REWIRE YOUR REFLEXES" · Cross-match: each symbol kills the next.
-5. **combo** — "CHAIN IT, 5X IT" · Streaks stack multipliers fast.
-6. **share** — "CAN YOU BEAT ME?" · Share your score. Dare your friends.
+3. **color** — "DON'T TRUST THE SHAPE" · The shape is a decoy. Match the color.
+4. **cross** — "THEN THE RULES SWAP" · Cross kills square. Two symbols trade places.
+5. **triple** — "AND SWAP AGAIN" · Double cross. Triple cross. Keep up.
+6. **combo** — "CHAIN IT, 5X IT" · Streaks stack multipliers fast.
+7. **share** — "CAN YOU BEAT ME?" · Share your score. Dare your friends.
 
 ## Notes
 - `raw/` holds the unframed full-bleed gameplay captures (1320×2868) used to build the
   framed screenshots — kept in case you want to recompose or use them bare.
+- **Scores in the captures are real for the current build.** Scoring is one point per
+  obstacle destroyed, so a phase-9 run reads in the low hundreds. Any screenshot showing
+  a five-figure score predates that change and is a lie to the viewer — regenerate it.
 - These are **marketing** assets. The in-app launcher icon (`ios/.../AppIcon.appiconset`,
   Android adaptive icon) is separate — see STORE_LISTING.md if you want it re-skinned to
   match `app-icon-1024.png` (iOS is a drop-in; Android needs a centre-safe variant because
   the adaptive mask crops the corners where the symbols sit).
-- Regenerate everything with `/tmp/qs-assets.mjs` (Chrome CDP renderer) — needs
-  `npm run preview` + headless Chrome on :9222, then `node --experimental-websocket`.
+- Regenerate with [`tools/store-frames.mjs`](../tools/store-frames.mjs) — it lives in the
+  repo now (the previous renderer sat in `/tmp` and did not survive). Capture the raw
+  gameplay screens at a 440×956 viewport with `deviceScaleFactor: 3`, run the script to
+  write one HTML page per screenshot, then screenshot each page at the size in `TARGETS`.
+  The captions and the device-frame geometry both live in that file.
 - Trademark reminder: the triangle/circle/cross/square set resembles PlayStation face
   buttons. Confirm you're OK with that risk before submitting (see STORE_LISTING.md).
