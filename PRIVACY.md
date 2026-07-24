@@ -1,7 +1,7 @@
 # Privacy Policy — Quadshot
 
 _Last updated: 8 July 2026 · applies to Quadshot v1.1.0 and later._
-_Canonical, published version: <https://dsuboticgreco.github.io/quadshot/privacy.html>_
+_Canonical, published version: <https://noqyris.github.io/quadshot/privacy.html>_
 
 Quadshot is a single-player arcade game published by bySubotic (Djordje Subotic).
 

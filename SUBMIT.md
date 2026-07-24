@@ -51,12 +51,15 @@ google.com, pub-3307486877162157, DIRECT, f08c47fec0942fa0
 ```
 
 **The catch: AdMob only crawls the _hostname_ of the developer website in your
-store listing, at the domain root.** The privacy page is on GitHub Pages at
-`https://dsuboticgreco.github.io/quadshot/privacy.html`, so the crawler will
-fetch `https://dsuboticgreco.github.io/app-ads.txt` — the `/quadshot/` project
-repo is never consulted. That path is only servable from the **user-site repo**
-`dsuboticgreco.github.io`; if it doesn't exist yet, create it (public, with an
-`app-ads.txt` at its root) or point the listing at a domain you control.
+store listing, at the domain root.** A URL like `.../quadshot/privacy.html`
+still sends the crawler to `https://<host>/app-ads.txt` — a project-repo
+subfolder is never consulted. On GitHub Pages that root path is only servable
+from the **user-site repo**.
+
+Status: **done.** `noqyris/noqyris.github.io` serves
+<https://noqyris.github.io/app-ads.txt> (HTTP 200, verified), and the Quadshot
+privacy page lives on the same host at `/quadshot/privacy.html`. All three
+listing URLs point at that one host, so the crawl chain resolves.
 
 Steps, in order:
 1. Publish the line above at `https://<your-domain>/app-ads.txt` — plain text,

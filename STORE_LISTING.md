@@ -100,9 +100,9 @@ Feature-graphic tagline: **"Chain combos. Beat your friends."**
 
 ## Required links
 
-- **Privacy policy URL:** <https://dsuboticgreco.github.io/quadshot/privacy.html>
-- **Support URL:** <https://dsuboticgreco.github.io/quadshot/> (email: subotic.djo@gmail.com)
-- **Marketing URL:** <https://dsuboticgreco.github.io/quadshot/> — this one is
+- **Privacy policy URL:** <https://noqyris.github.io/quadshot/privacy.html>
+- **Support URL:** <https://noqyris.github.io/> (email: subotic.djo@gmail.com)
+- **Marketing URL:** <https://noqyris.github.io/> — this one is
   load-bearing beyond marketing: AdMob crawls its **host** for `app-ads.txt`
   before it will fully serve ads. See the app-ads.txt section in `SUBMIT.md`.
 

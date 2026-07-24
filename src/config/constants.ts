@@ -334,10 +334,15 @@ export const MONETIZATION = {
   REMOVE_ADS_PRODUCT_ID: "com.bysubotic.quadshot.removeads",
 } as const;
 
-/** Viral share loop. Replace URL with the real App Store / landing link. */
+/**
+ * Viral share loop. The URL rides along in every shared score, so it points at
+ * the App Store listing itself — a tap installs the game. (It used to point at
+ * `quadshot.app`, a domain that was never registered: every share shipped a
+ * dead link.)
+ */
 export const SHARE = {
   TITLE: "Quadshot",
-  URL: "https://quadshot.app", // TODO: your App Store / landing link
+  URL: `https://apps.apple.com/app/id${APP_STORE_ID}`,
   hook: (score: number) =>
     `I scored ${score.toLocaleString()} in QUADSHOT 🎮 reflex arcade. Can you beat me?`,
 } as const;
