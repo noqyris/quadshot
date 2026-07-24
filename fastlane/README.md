@@ -63,6 +63,14 @@ Re-upload the ipa already in build/ (no rebuild)
 
 Upload + submit for App Store review
 
+### ios submit_existing
+
+```sh
+[bundle exec] fastlane ios submit_existing
+```
+
+Push metadata + screenshots and submit a build that is ALREADY on TestFlight
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
