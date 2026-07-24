@@ -260,23 +260,23 @@ export class Hud {
 
   private buildCrossLegend(cross: CrossTier): void {
     // Caption makes the arrow unambiguous: the left symbol you fire destroys the
-    // right one. Below it, all four "fired → destroyed" pairs in pad order —
-    // the rows this tier rewires burn bright, the untouched ones sit back, so a
-    // glance answers "what changed?" without re-reading the whole strip.
+    // right one. Below it, ONLY the pairs this tier rewires — a symbol that
+    // still hits its own kind needs no reminder, and leaving it out keeps the
+    // strip to exactly what changed.
     const caption = this.legendText("FIRE  →  DESTROYS", 11);
     caption.x = 0;
     caption.y = -9;
     this.legend.add(caption);
 
-    const pairs = MatchRules.crossLegend(cross).map((p) => ({
-      obj: this.makeCrossPair(p.fired, p.kills, p.twisted),
+    const pairs = MatchRules.crossTwisted(cross).map((p) => ({
+      obj: this.makeCrossPair(p.fired, p.kills),
       w: 44,
     }));
     this.placeRow(pairs, 9, 10);
   }
 
   /** A single "fired → destroyed" pair as a self-contained container. */
-  private makeCrossPair(fired: Sym, target: Sym, twisted: boolean): Phaser.GameObjects.Container {
+  private makeCrossPair(fired: Sym, target: Sym): Phaser.GameObjects.Container {
     const c = this.scene.add.container(0, 0);
     const a = this.legendIcon(fired, 15);
     a.x = -15;
@@ -284,7 +284,6 @@ export class Hud {
     const t = this.legendIcon(target, 15);
     t.x = 15;
     c.add([a, arrow, t]);
-    if (!twisted) c.setAlpha(0.34);
     return c;
   }
 
