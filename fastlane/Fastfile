@@ -75,6 +75,18 @@ platform :ios do
     upload_to_testflight(api_key: asc_key, skip_waiting_for_build_processing: true)
   end
 
+  desc "Re-upload the ipa already in build/ (no rebuild)"
+  # Apple's uploader returns a 500 often enough to matter, and a rebuild would
+  # burn another build number for a transfer that never reached them. The
+  # archive from the failed `beta` run is still valid — just send it again.
+  lane :beta_upload do
+    upload_to_testflight(
+      api_key: asc_key,
+      ipa: "build/Quadshot.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+
   desc "Upload + submit for App Store review"
   lane :release do
     build_ipa
