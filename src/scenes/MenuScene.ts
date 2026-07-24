@@ -3,6 +3,7 @@ import {
   ALL_SYMBOLS,
   COLORS,
   GAME,
+  MONETIZATION,
   SCENES,
   TEX,
   UI,
@@ -11,7 +12,13 @@ import { createBackground } from "../ui/Background";
 import { showBanner } from "../ui/Banner";
 import { openSettings } from "../ui/SettingsPanel";
 import { openTutorial } from "../ui/TutorialPanel";
-import { ACCENT_NUM, createButton, createLinkButton, createText } from "../ui/widgets";
+import {
+  ACCENT_NUM,
+  ButtonHandle,
+  createButton,
+  createLinkButton,
+  createText,
+} from "../ui/widgets";
 import { Monetization } from "../systems/Monetization";
 import { Sfx } from "../systems/Sfx";
 import { Storage } from "../systems/Storage";
@@ -21,6 +28,9 @@ export class MenuScene extends Phaser.Scene {
   private bestText!: Phaser.GameObjects.Text;
   private overlayOpen = false;
   private menuBanner?: Phaser.GameObjects.Container;
+  private removeAdsBtn?: ButtonHandle;
+  /** True while a payment sheet is open, so a second tap can't stack another. */
+  private purchasing = false;
 
   constructor() {
     super(SCENES.MENU);
@@ -112,6 +122,10 @@ export class MenuScene extends Phaser.Scene {
       this.openTutorialOverlay(false)
     );
 
+    // Remove-ads offer, right on the title screen (Settings keeps its own copy
+    // plus the Restore button Apple requires).
+    const removeAds = this.buildRemoveAds(cx, H * 0.905);
+
     // Settings gear (top-right corner).
     createLinkButton(this, GAME.WIDTH - 22, 22, "⚙", () => this.openSettingsOverlay(), 24);
 
@@ -142,6 +156,7 @@ export class MenuScene extends Phaser.Scene {
     reveal(this.bestText, 1, 820);
     reveal(play, 1, 900, 14);
     reveal(howToPlay, 1, 980);
+    if (removeAds) reveal(removeAds, 1, 1060);
 
     // Allow Enter / Space to start.
     this.input.keyboard?.once("keydown-ENTER", () => this.startGame());
@@ -157,6 +172,57 @@ export class MenuScene extends Phaser.Scene {
     void Storage.getBestScore().then((best) =>
       this.bestText.setText(`BEST  ${best.toLocaleString()}`)
     );
+  }
+
+  /**
+   * Title-screen "remove ads" button.
+   *
+   * The label carries no price until StoreKit has spoken, and asking it here
+   * would mean asking at launch — exactly what `Monetization.warmIap` refuses to
+   * do, because an entitlement lookup can drop a "Sign in to Apple Account"
+   * sheet over the menu. The tap wakes the store, and Apple's own payment sheet
+   * is what shows the localized price. If Settings already woke it this session,
+   * the price is here from the start.
+   */
+  private buildRemoveAds(cx: number, y: number): Phaser.GameObjects.Container | undefined {
+    if (!MONETIZATION.ENABLED || Monetization.isRemoved()) return undefined;
+    const btn = createButton(this, cx, y, Monetization.removeAdsLabel(), () => this.buyRemoveAds(), {
+      w: 224,
+      h: 42,
+      fontSize: 15,
+      filled: false,
+    });
+    this.removeAdsBtn = btn;
+    return btn.container;
+  }
+
+  private buyRemoveAds(): void {
+    const btn = this.removeAdsBtn;
+    if (!btn || this.purchasing) return; // a second tap must not open two sheets
+    this.purchasing = true;
+    btn.setLabel("…");
+    void Monetization.purchaseRemoveAds().then((ok) => {
+      this.purchasing = false;
+      if (!ok) {
+        // Cancelled, or the store never answered — go back to the offer.
+        btn.setLabel(Monetization.removeAdsLabel());
+        return;
+      }
+      this.onAdsRemoved();
+    });
+  }
+
+  /** Paid: drop every ad surface on this screen and thank them in place. */
+  private onAdsRemoved(): void {
+    this.menuBanner?.destroy();
+    this.menuBanner = undefined;
+    const btn = this.removeAdsBtn;
+    if (!btn) return;
+    const { x, y } = btn.container;
+    btn.container.destroy();
+    this.removeAdsBtn = undefined;
+    const label = createText(this, x, y, "✓ ADS REMOVED — THANK YOU", 14, UI.ACCENT).setAlpha(0);
+    this.tweens.add({ targets: label, alpha: 1, duration: 300, ease: "Quad.out" });
   }
 
   private openSettingsOverlay(): void {
